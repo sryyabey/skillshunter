@@ -186,6 +186,7 @@ Skills are collected from public sources and approved for listing. Community rev
         <input id="suggest-author" name="author" value="{{ old('author') }}" required maxlength="100" class="px-3 py-2 border border-borderline rounded-lg">
         <label for="suggest-body">What should this skill help with?</label>
         <textarea id="suggest-body" name="body" required maxlength="3000" rows="3" class="px-3 py-2 border border-borderline rounded-lg">{{ old('body') }}</textarea>
+        <p class="text-xs text-muted">We use your submission to evaluate the suggested skill. See the <a class="text-emeraldTrust underline" href="{{ route('privacy') }}">Privacy Notice</a>.</p>
         <button class="justify-self-start px-4 py-2 bg-ink text-paper rounded-lg">Submit Suggestion</button>
       </form>
     </div>

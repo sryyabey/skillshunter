@@ -6,6 +6,8 @@
       <a href="{{ route('welcome') }}#skill-directory" class="hover:text-emeraldTrust">Skill Directory</a>
       <a href="{{ route('welcome') }}#editorial-standards" class="hover:text-emeraldTrust">How We List Skills</a>
       <a href="{{ route('welcome') }}#suggest-skill" class="hover:text-emeraldTrust">Suggest a Skill</a>
+      <a href="{{ route('privacy') }}" class="hover:text-emeraldTrust">Privacy Notice</a>
+      <a href="{{ route('terms') }}" class="hover:text-emeraldTrust">Terms of Use</a>
     </nav>
   </div>
 </footer>

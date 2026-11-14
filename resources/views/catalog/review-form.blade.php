@@ -22,6 +22,6 @@
   </select>
   <label for="review-body">What did you test, and what happened?</label>
   <textarea id="review-body" name="body" required maxlength="3000" rows="3" class="px-3 py-2 border border-borderline rounded-lg">{{ old('body') }}</textarea>
-  <p class="text-xs text-muted">Reviews appear after moderation.</p>
+  <p class="text-xs text-muted">Approved reviews appear publicly with the name or role you enter. See the <a class="text-emeraldTrust underline" href="{{ route('privacy') }}">Privacy Notice</a>.</p>
   <button class="justify-self-start px-4 py-2 bg-emeraldTrust text-white rounded-lg">Submit Review</button>
 </form>
