@@ -2,6 +2,10 @@
 
 @section('title', 'skillshunter.net — Curated AI Skills & Community Reviews')
 
+@push('meta')
+  <meta name="google-site-verification" content="CoBJLXA_fglP9V5yZuou4Ai-DAyBYPXONxZjgvPmhis" />
+@endpush
+
 @section('status-message')
 Editorial standard: We test every AI skill in real workflows and update it based on community feedback.
 @endsection
