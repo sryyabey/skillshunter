@@ -123,8 +123,8 @@ Skills are collected from public sources and approved for listing. Community rev
         </div>
       </div>
       <aside id="community-feed" class="lg:col-span-4 space-y-8">
-        <div class="bg-white border border-borderline rounded-2xl p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          <div class="flex items-center justify-between mb-4">
+        <div class="grid gap-4 bg-white border border-borderline rounded-2xl p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+          <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <h3 class="font-serif text-lg font-medium text-ink">Latest Field Reports</h3>
             <span class="inline-flex items-center gap-1.5 text-[11px] font-mono text-emeraldTrust bg-emeraldTrust/10 px-2 py-0.5 rounded-full">
               <span class="w-1.5 h-1.5 rounded-full bg-emeraldTrust animate-pulse"></span> COMMUNITY FEED
@@ -146,22 +146,22 @@ Skills are collected from public sources and approved for listing. Community rev
             @endforelse
           </div>
 
-          <a href="{{ $reviewSkills->isNotEmpty() ? '#share-review' : '#suggest-skill' }}" class="mt-5 w-full py-2.5 px-4 border border-ink text-ink hover:bg-ink hover:text-paper text-xs font-semibold rounded-xl transition-colors">+ Share Your Experience</a>
+          <a href="{{ $reviewSkills->isNotEmpty() ? '#share-review' : '#suggest-skill' }}" class="block py-2.5 px-4 text-center border border-ink text-ink hover:bg-ink hover:text-paper text-xs font-semibold rounded-xl transition-colors">+ Share Your Experience</a>
         </div>
         <div id="editorial-standards" class="bg-[#F3F1EC] border border-borderline rounded-2xl p-5">
-          <h4 class="font-serif text-base font-semibold text-ink mb-2">Our Editorial Standards</h4>
+          <h4 class="font-serif text-base font-semibold text-ink mb-2">How We List Skills</h4>
           <ul class="space-y-2.5 text-xs text-muted leading-relaxed">
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span><strong>AI-assisted catalog:</strong> We use automation to discover skills and draft their catalog pages.</span>
+              <span>Our automated worker finds skills from public sources and drafts catalog pages.</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span><strong>Community reviews:</strong> Reviewers describe which model they used and what they tested.</span>
+              <span>We approve entries for listing. Each entry links to its original source when available.</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span><strong>Examples:</strong> Sample inputs and outputs illustrate how a skill can be used.</span>
+              <span>Sample inputs and outputs illustrate usage. Community reviews share what happened when readers tried a skill.</span>
             </li>
           </ul>
         </div>
