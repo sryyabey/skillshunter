@@ -45,17 +45,17 @@
     </div>
   @endif
   <header class="sticky top-0 z-30 bg-paper/90 backdrop-blur-md border-b border-borderline">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <a href="{{ route('welcome') }}" class="flex items-center gap-2.5">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 min-h-16 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <a href="{{ route('welcome') }}" class="flex shrink-0 items-center gap-2.5">
         <img src="{{ asset('images/logo.webp') }}" alt="" width="32" height="32" class="size-8 shrink-0 rounded-lg">
         <span class="font-serif text-xl font-semibold tracking-tight text-ink">skillshunter<span class="text-emeraldTrust">.net</span></span>
       </a>
 
-      <nav aria-label="Primary" class="hidden md:flex items-center gap-8 text-sm font-medium text-muted">
+      <nav aria-label="Primary" class="hidden xl:flex items-center gap-5 text-sm font-medium text-muted">
         @yield('navigation')
       </nav>
 
-      <div class="flex items-center gap-3">
+      <div class="flex empty:hidden basis-full flex-wrap items-center gap-2 sm:basis-auto">
         @yield('header-actions')
       </div>
     </div>
