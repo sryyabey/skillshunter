@@ -48,5 +48,38 @@ class SkillDiscoveryJobTest extends TestCase
         $this->patchJson('/api/v1/discovery-jobs/'.$job->id, [
             'lease_token' => $first, 'status' => 'completed', 'results' => [],
         ])->assertConflict();
+
+        $this->travel(41)->minutes();
+        $this->postJson('/api/v1/discovery-jobs/claim')->assertOk()->assertJsonPath('data', null);
+        $this->assertDatabaseHas('skill_discovery_jobs', ['id' => $job->id, 'status' => 'failed', 'attempts' => 2]);
+    }
+
+    public function test_retryable_failure_stops_after_the_second_attempt(): void
+    {
+        $token = str_repeat('a', 64);
+        config(['skill-integration.token' => $token]);
+        $category = Category::factory()->create();
+        $job = SkillDiscoveryJob::create(['topic' => 'React', 'category_id' => $category->id]);
+        $claimUrl = '/api/v1/discovery-jobs/claim';
+        $jobUrl = '/api/v1/discovery-jobs/'.$job->id;
+        $failure = ['status' => 'failed', 'results' => [], 'error' => 'Temporary error.', 'retryable' => true];
+
+        $first = $this->withToken($token)->postJson($claimUrl)->assertOk()->json('data.lease_token');
+        $this->patchJson($jobUrl, $failure + ['lease_token' => $first])
+            ->assertOk()->assertJsonPath('data.status', 'queued');
+        $this->postJson($claimUrl)->assertOk()->assertJsonPath('data', null);
+
+        $this->travel(11)->minutes();
+        $second = $this->postJson($claimUrl)->assertOk()->json('data.lease_token');
+        $this->patchJson($jobUrl, $failure + ['lease_token' => $second])
+            ->assertOk()->assertJsonPath('data.status', 'failed');
+        $this->postJson($claimUrl)->assertOk()->assertJsonPath('data', null);
+        $this->assertDatabaseHas('skill_discovery_jobs', ['id' => $job->id, 'status' => 'failed', 'attempts' => 2]);
+
+        $job->forceFill(['status' => 'queued', 'available_at' => now()->addMinutes(10)])->save();
+        $this->postJson($claimUrl)->assertOk()->assertJsonPath('data', null);
+        $this->assertDatabaseHas('skill_discovery_jobs', [
+            'id' => $job->id, 'status' => 'failed', 'attempts' => 2, 'available_at' => null,
+        ]);
     }
 }

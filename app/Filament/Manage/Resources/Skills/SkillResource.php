@@ -22,6 +22,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +78,21 @@ class SkillResource extends Resource
                 IconColumn::make('is_published')->boolean(),
                 TextColumn::make('verified_at')->date()->sortable(),
                 TextColumn::make('reviews_count')->counts('reviews')->label('Reviews'),
+            ])
+            ->filters([
+                TernaryFilter::make('is_published')
+                    ->label('Publication status')
+                    ->trueLabel('Published')
+                    ->falseLabel('Draft'),
+                SelectFilter::make('category')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload(),
+                TernaryFilter::make('verified_at')
+                    ->label('Verification status')
+                    ->nullable()
+                    ->trueLabel('Verified')
+                    ->falseLabel('Unverified'),
             ])
             ->recordActions([
                 EditAction::make(),

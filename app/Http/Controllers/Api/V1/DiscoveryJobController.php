@@ -12,11 +12,14 @@ use Illuminate\Support\Str;
 
 class DiscoveryJobController extends Controller
 {
-    private const MAX_ATTEMPTS = 3;
+    private const MAX_ATTEMPTS = 2;
 
     public function claim(): JsonResponse
     {
         return DB::transaction(function (): JsonResponse {
+            SkillDiscoveryJob::where('status', 'queued')->where('attempts', '>=', self::MAX_ATTEMPTS)
+                ->update(['status' => 'failed', 'available_at' => null]);
+
             SkillDiscoveryJob::where('status', 'running')->where('lease_until', '<=', now())
                 ->where('attempts', '>=', self::MAX_ATTEMPTS)
                 ->update(['status' => 'failed', 'lease_token' => null, 'lease_until' => null, 'error' => 'Worker lease expired.']);
