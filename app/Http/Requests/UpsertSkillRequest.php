@@ -3,12 +3,28 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpsertSkillRequest extends FormRequest
 {
     public function validationData(): array
     {
         return ['slug' => $this->route('slug')] + parent::validationData();
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $commit = $this->input('source_commit');
+                $url = $this->input('source_url');
+                if (is_string($commit) && is_string($url)
+                    && ! preg_match('~\Ahttps://github\.com/[\w.-]+/[\w.-]+/blob/'.preg_quote($commit, '~').'/(?:[^?#]+/)?SKILL\.md\z~i', $url)) {
+                    $validator->errors()->add('source_url', 'The source URL must point to SKILL.md at the supplied GitHub commit.');
+                }
+            },
+        ];
     }
 
     public function rules(): array
@@ -19,8 +35,8 @@ class UpsertSkillRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'summary' => ['required', 'string', 'max:4000'],
             'instructions' => ['required_without:source_markdown', 'nullable', 'string', 'max:100000'],
-            'source_markdown' => ['nullable', 'string', 'max:100000', 'not_regex:/\x00/'],
-            'source_url' => ['nullable', 'string', 'max:2048', 'url:http,https'],
+            'source_markdown' => ['required_with:source_commit', 'nullable', 'string', 'max:100000', 'not_regex:/\x00/'],
+            'source_url' => ['required_with:source_commit', 'nullable', 'string', 'max:2048', 'url:http,https'],
             'seo_title' => ['nullable', 'string', 'max:70'],
             'seo_description' => ['nullable', 'string', 'max:170'],
             'seo_keywords' => ['nullable', 'array', 'list', 'max:12'],
@@ -39,6 +55,8 @@ class UpsertSkillRequest extends FormRequest
             'setup_tip' => ['nullable', 'string', 'max:4000'],
             'sample_input' => ['nullable', 'string', 'max:30000'],
             'sample_output' => ['nullable', 'string', 'max:30000'],
+            'source_commit' => [Rule::requiredIf(fn (): bool => str_starts_with((string) $this->route('slug'), 'github-') || str_starts_with((string) $this->route('slug'), 'anthropics-')), 'nullable', 'regex:/\A[0-9a-f]{40}\z/'],
+            'approved_by' => ['missing'],
             'is_published' => ['missing'],
             'verified_at' => ['missing'],
         ];

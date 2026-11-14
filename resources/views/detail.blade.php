@@ -124,12 +124,13 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
         <section id="system-instructions" class="space-y-3">
           <h2 class="font-serif text-2xl font-medium text-ink">{{ $hasSource ? 'SKILL.md' : 'System Instructions' }}</h2>
           @if ($hasSource && $sourceUrl)
-            <p class="text-xs text-muted">
-              <a href="{{ $sourceUrl }}" class="underline underline-offset-4">Open the original skill</a>
+            <div class="space-y-1 text-xs">
+              <p class="font-semibold text-ink">Source URL</p>
+              <a href="{{ $sourceUrl }}" class="block [overflow-wrap:anywhere] text-emeraldTrust underline underline-offset-4">{{ $sourceUrl }}</a>
               @if ($skill->slug === 'github-vercel-labs-agent-skills-skills-react-best-practices-4d22a63f8b8e')
-                · <a href="https://github.com/vercel-labs/agent-skills/blob/main/skills/react-best-practices/AGENTS.md" class="underline underline-offset-4">Read the full rules and code examples</a>
+                <a href="https://github.com/vercel-labs/agent-skills/blob/main/skills/react-best-practices/AGENTS.md" class="inline-block text-emeraldTrust underline underline-offset-4">Read the full rules and code examples</a>
               @endif
-            </p>
+            </div>
           @endif
           @if (filled($instructions))
             <div class="flex flex-wrap items-center gap-2">

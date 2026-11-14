@@ -59,6 +59,7 @@ class SkillController extends Controller
             $skill = DB::transaction(function () use ($skill, $attributes): Skill {
                 $current = Skill::whereKey($skill->id)->lockForUpdate()->firstOrFail();
                 abort_if($current->is_published, 409, 'Published skills must be edited in Filament.');
+                abort_if($current->source_commit && empty($attributes['source_commit']), 422, 'Supply the pinned source revision.');
                 $current->fill($attributes);
                 if ($current->isDirty('source_url') && ! array_key_exists('source_markdown', $attributes)) {
                     $current->source_markdown = null;

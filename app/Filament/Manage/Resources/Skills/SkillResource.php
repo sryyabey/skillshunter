@@ -54,6 +54,8 @@ class SkillResource extends Resource
                 Textarea::make('instructions')->requiredWithout('source_markdown')->dehydrateStateUsing(fn (?string $state): string => $state ?? '')->rows(10)->columnSpanFull(),
                 Textarea::make('source_markdown')->label('Original SKILL.md')->rows(12)->maxLength(100000)->columnSpanFull(),
                 TextInput::make('source_url')->url()->maxLength(2048)->columnSpanFull(),
+                TextInput::make('source_commit')->label('GitHub source commit')->maxLength(40)->regex('/\A[0-9a-f]{40}\z/')->required(fn (?Skill $record): bool => filled($record?->source_commit)),
+                TextInput::make('approved_by')->label('Approving editor ID')->disabled(),
                 TextInput::make('license')->maxLength(255),
                 TextInput::make('version')->maxLength(32),
                 DatePicker::make('verified_at')->label('Listing approval date'),

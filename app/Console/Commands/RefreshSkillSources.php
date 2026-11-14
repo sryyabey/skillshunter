@@ -16,7 +16,7 @@ class RefreshSkillSources extends Command
 {
     public function handle(): int
     {
-        $skills = Skill::query()->whereNotNull('source_url')
+        $skills = Skill::query()->whereNotNull('source_url')->whereNull('source_commit')
             ->when($this->argument('slug'), fn ($query, $slug) => $query->where('slug', $slug))
             ->lazyById();
         $failed = false;
@@ -61,7 +61,7 @@ class RefreshSkillSources extends Command
                 }
 
                 if ($skill->source_markdown !== $markdown) {
-                    Skill::query()->whereKey($skill->id)->where('source_url', $skill->source_url)
+                    Skill::query()->whereKey($skill->id)->where('source_url', $skill->source_url)->whereNull('source_commit')
                         ->update(['source_markdown' => $markdown]);
                 }
                 $this->info("Imported {$skill->slug}.");

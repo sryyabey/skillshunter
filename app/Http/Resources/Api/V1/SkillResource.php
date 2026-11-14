@@ -16,6 +16,8 @@ class SkillResource extends JsonResource
             'summary' => $this->summary,
             'instructions' => $this->source_markdown ?? $this->instructions,
             'source_url' => $this->source_url,
+            'source_commit' => $this->source_commit,
+            'source_markdown' => $this->source_markdown,
             'seo_title' => $this->seo_title,
             'seo_description' => $this->seo_description,
             'seo_keywords' => $this->seo_keywords,

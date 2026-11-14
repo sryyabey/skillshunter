@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Skill;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class SkillApiTest extends TestCase
@@ -80,6 +82,43 @@ class SkillApiTest extends TestCase
             'instructions' => 'Replacement instructions.',
         ])->assertOk()->assertJsonPath('data.instructions', 'Replacement instructions.');
         $this->assertNull(Skill::where('slug', 'source-example')->sole()->source_markdown);
+    }
+
+    public function test_worker_requires_a_pinned_source_and_only_an_editor_can_publish_it(): void
+    {
+        $category = Category::factory()->create();
+        $commit = str_repeat('a', 40);
+        $path = '/api/v1/skills/github-example';
+        $payload = [
+            'category_slug' => $category->slug,
+            'title' => 'Example',
+            'summary' => 'Example summary.',
+            'source_markdown' => "Original instructions.\n",
+            'source_url' => "https://github.com/example/project/blob/{$commit}/SKILL.md",
+        ];
+
+        $this->withToken(self::TOKEN)->putJson($path, $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('source_commit');
+        $this->putJson($path, [...$payload, 'source_commit' => str_repeat('b', 40)])
+            ->assertUnprocessable()->assertJsonValidationErrors('source_url');
+        $this->putJson($path, [...$payload, 'source_commit' => $commit])->assertCreated();
+
+        $skill = Skill::where('slug', 'github-example')->sole();
+        try {
+            $skill->update(['is_published' => true]);
+            $this->fail('An unapproved worker draft became public.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('is_published', $exception->errors());
+        }
+
+        $editor = User::factory()->create();
+        $this->actingAs($editor);
+        $skill->refresh()->update(['verified_at' => today(), 'is_published' => true]);
+        $this->assertSame($editor->id, $skill->approved_by);
+        $skill->update(['source_markdown' => 'Updated original instructions.']);
+        $this->assertFalse($skill->refresh()->is_published);
+        $this->assertNull($skill->approved_by);
+        $this->assertNull($skill->verified_at);
     }
 
     public function test_ingestion_rejects_invalid_content_and_editorial_fields(): void
