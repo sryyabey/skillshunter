@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Filament\Manage\Resources\Reviews\Pages\ManageReviews;
+use App\Filament\Manage\Resources\Skills\Pages\ManageSkills;
 use App\Models\Review;
 use App\Models\Skill;
 use App\Models\SkillSuggestion;
 use App\Models\User;
 use Database\Seeders\SkillCatalogSeeder;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -123,5 +125,33 @@ class SkillCatalogTest extends TestCase
             ->callTableAction('publish', $review);
 
         $this->assertTrue($review->refresh()->is_approved);
+    }
+
+    public function test_editor_can_bulk_update_publication_and_verification_independently(): void
+    {
+        $editor = User::factory()->create();
+        $editor->assignRole(Role::create(['name' => 'panel_user']));
+        foreach (['ViewAny:Skill', 'Update:Skill'] as $name) {
+            $editor->givePermissionTo(Permission::create(['name' => $name]));
+        }
+        $this->actingAs($editor);
+        Filament::setCurrentPanel(Filament::getPanel('manage'));
+        $skills = Skill::factory()->count(2)->create();
+        $other = Skill::factory()->create();
+
+        Livewire::test(ManageSkills::class)
+            ->callTableBulkAction('setPublicationStatus', $skills, ['is_published' => 'published']);
+        Livewire::test(ManageSkills::class)
+            ->callTableBulkAction('setVerificationDate', $skills, ['verified_at' => '2026-11-14']);
+        Livewire::test(ManageSkills::class)
+            ->callTableBulkAction('setPublicationStatus', [$skills[0]], ['is_published' => 'draft']);
+
+        $this->assertFalse($skills[0]->refresh()->is_published);
+        $this->assertTrue($skills[1]->refresh()->is_published);
+        foreach ($skills as $skill) {
+            $this->assertSame('2026-11-14', $skill->verified_at->toDateString());
+        }
+        $this->assertFalse($other->refresh()->is_published);
+        $this->assertNull($other->verified_at);
     }
 }

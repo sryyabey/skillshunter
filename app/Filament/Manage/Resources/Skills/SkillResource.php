@@ -5,6 +5,7 @@ namespace App\Filament\Manage\Resources\Skills;
 use App\Filament\Manage\Resources\Skills\Pages\ManageSkills;
 use App\Models\Skill;
 use BackedEnum;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -22,6 +23,8 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use UnitEnum;
 
 class SkillResource extends Resource
@@ -80,6 +83,43 @@ class SkillResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('setPublicationStatus')
+                        ->label('Set publication status')
+                        ->authorizeIndividualRecords('update')
+                        ->schema([
+                            Select::make('is_published')
+                                ->label('Publication status')
+                                ->options(['published' => 'Published', 'draft' => 'Draft'])
+                                ->in(['published', 'draft'])
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            DB::transaction(function () use ($records, $data): void {
+                                foreach ($records as $skill) {
+                                    $skill->update(['is_published' => $data['is_published'] === 'published']);
+                                }
+                            });
+                        })
+                        ->successNotificationTitle('Publication status updated')
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('setVerificationDate')
+                        ->label('Set verification date')
+                        ->authorizeIndividualRecords('update')
+                        ->schema([
+                            DatePicker::make('verified_at')
+                                ->label('Verification date')
+                                ->default(fn (): string => today()->toDateString())
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            DB::transaction(function () use ($records, $data): void {
+                                foreach ($records as $skill) {
+                                    $skill->update(['verified_at' => $data['verified_at']]);
+                                }
+                            });
+                        })
+                        ->successNotificationTitle('Verification date updated')
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
