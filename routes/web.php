@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SkillCatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SkillCatalogController::class, 'index'])->name('welcome');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/skills/{slug}', [SkillCatalogController::class, 'show'])->name('detail');
 
 Route::middleware('throttle:10,1')->group(function (): void {

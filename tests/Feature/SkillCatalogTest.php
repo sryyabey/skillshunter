@@ -154,4 +154,21 @@ class SkillCatalogTest extends TestCase
         $this->assertFalse($other->refresh()->is_published);
         $this->assertNull($other->verified_at);
     }
+
+    public function test_sitemap_lists_the_canonical_home_and_only_published_skills(): void
+    {
+        config(['app.url' => 'https://skillshunter.net']);
+        $published = Skill::factory()->published()->create(['slug' => 'public-skill']);
+        Skill::factory()->create(['slug' => 'draft-skill']);
+
+        $response = $this->get('/sitemap.xml')->assertOk()
+            ->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
+        $xml = simplexml_load_string($response->getContent());
+
+        $this->assertSame('http://www.sitemaps.org/schemas/sitemap/0.9', $xml->getNamespaces()['']);
+        $this->assertCount(2, $xml->url);
+        $this->assertSame('https://skillshunter.net/', (string) $xml->url[0]->loc);
+        $this->assertSame('https://skillshunter.net/skills/public-skill', (string) $xml->url[1]->loc);
+        $this->assertSame($published->updated_at->toAtomString(), (string) $xml->url[1]->lastmod);
+    }
 }
