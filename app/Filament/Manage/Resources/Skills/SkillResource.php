@@ -55,7 +55,7 @@ class SkillResource extends Resource
                 TextInput::make('source_url')->url()->maxLength(2048)->columnSpanFull(),
                 TextInput::make('license')->maxLength(255),
                 TextInput::make('version')->maxLength(32),
-                DatePicker::make('verified_at'),
+                DatePicker::make('verified_at')->label('Listing approval date'),
                 Toggle::make('is_published'),
                 TagsInput::make('use_cases')->columnSpanFull(),
                 TagsInput::make('limitations')->columnSpanFull(),
@@ -76,7 +76,7 @@ class SkillResource extends Resource
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('category.name')->sortable(),
                 IconColumn::make('is_published')->boolean(),
-                TextColumn::make('verified_at')->date()->sortable(),
+                TextColumn::make('verified_at')->label('Listing approved on')->date()->sortable(),
                 TextColumn::make('reviews_count')->counts('reviews')->label('Reviews'),
             ])
             ->filters([
@@ -89,10 +89,10 @@ class SkillResource extends Resource
                     ->searchable()
                     ->preload(),
                 TernaryFilter::make('verified_at')
-                    ->label('Verification status')
+                    ->label('Listing approval')
                     ->nullable()
-                    ->trueLabel('Verified')
-                    ->falseLabel('Unverified'),
+                    ->trueLabel('Approved')
+                    ->falseLabel('Pending approval'),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -120,11 +120,11 @@ class SkillResource extends Resource
                         ->successNotificationTitle('Publication status updated')
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('setVerificationDate')
-                        ->label('Set verification date')
+                        ->label('Set listing approval date')
                         ->authorizeIndividualRecords('update')
                         ->schema([
                             DatePicker::make('verified_at')
-                                ->label('Verification date')
+                                ->label('Listing approval date')
                                 ->default(fn (): string => today()->toDateString())
                                 ->required(),
                         ])
@@ -135,7 +135,7 @@ class SkillResource extends Resource
                                 }
                             });
                         })
-                        ->successNotificationTitle('Verification date updated')
+                        ->successNotificationTitle('Listing approval date updated')
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),

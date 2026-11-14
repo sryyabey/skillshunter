@@ -33,7 +33,7 @@ class SkillCatalogTest extends TestCase
         $draft = Skill::factory()->create();
         $this->get(route('detail', $draft->slug))->assertNotFound();
         $this->get(route('detail', 'architecture-code-review'))
-            ->assertOk()->assertSee('Test Evidence')->assertSee('System Instructions');
+            ->assertOk()->assertSee('Input & Output Examples', false)->assertDontSee('Last tested:')->assertSee('System Instructions');
     }
 
     public function test_review_stays_hidden_until_approved(): void

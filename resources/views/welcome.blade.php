@@ -7,7 +7,7 @@
 @endpush
 
 @section('status-message')
-Editorial standard: We test every AI skill in real workflows and update it based on community feedback.
+Skills are collected from public sources and approved for listing. Community reviews share hands-on results.
 @endsection
 
 @section('status-meta')
@@ -16,7 +16,7 @@ Editorial standard: We test every AI skill in real workflows and update it based
 
 @section('navigation')
 <a href="#skill-directory" class="text-ink hover:text-emeraldTrust transition-colors">Skill Directory</a>
-        <a href="#editorial-standards" class="hover:text-emeraldTrust transition-colors">How We Test</a>
+        <a href="#editorial-standards" class="hover:text-emeraldTrust transition-colors">How We List Skills</a>
         <a href="#community-feed" class="hover:text-emeraldTrust transition-colors">Latest Reviews</a>
 @endsection
 
@@ -34,10 +34,10 @@ Editorial standard: We test every AI skill in real workflows and update it based
         Independent AI Skill & Workflow Library
       </div>
       <h1 class="font-serif text-4xl sm:text-5xl font-medium tracking-tight text-ink leading-[1.12] mb-4">
-        A curated guide to AI skills, backed by <span class="italic text-emeraldTrust">real-world experience</span>.
+        Find AI skills for <span class="italic text-emeraldTrust">your workflow</span>.
       </h1>
       <p class="text-base sm:text-lg text-muted leading-relaxed mb-8">
-        We sort through hundreds of prompts and agent skills published each week to find the ones that work. See how others used them and share your own results in seconds.
+        Browse agent skills, compare use cases and limitations, and open the original source. Share your results after trying a skill.
       </p>
       <form action="{{ route('welcome') }}" method="GET" aria-label="Filter skills" class="flex flex-col sm:flex-row gap-3">
         <div class="relative flex-1">
@@ -64,7 +64,7 @@ Editorial standard: We test every AI skill in real workflows and update it based
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
       <div class="lg:col-span-8 space-y-6">
         <div class="flex items-center justify-between border-b border-borderline pb-3">
-          <h2 class="font-serif text-2xl font-medium text-ink">Featured Verified Skills</h2>
+          <h2 class="font-serif text-2xl font-medium text-ink">Skill Directory</h2>
           <span id="resultCount" class="text-xs font-mono text-muted">{{ $skills->total() }} SKILLS FOUND</span>
         </div>
 
@@ -79,7 +79,7 @@ Editorial standard: We test every AI skill in real workflows and update it based
               @if ($skill->verified_at)
               <span class="inline-flex items-center gap-1 text-xs font-medium text-emeraldTrust">
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                Editor Verified
+                Listing Approved
               </span>
               @endif
             </div>
@@ -91,7 +91,7 @@ Editorial standard: We test every AI skill in real workflows and update it based
             <a href="{{ route('detail', $skill->slug) }}" class="hover:text-emeraldTrust">{{ $skill->title }}</a>
           </h3>
           <p class="text-sm text-muted leading-relaxed mb-4">
-            <span class="font-semibold text-ink">Editor's note:</span> {{ $skill->editor_note ?? $skill->summary }}
+            <span class="font-semibold text-ink">Overview:</span> {{ $skill->editor_note ?? $skill->summary }}
           </p>
           @if ($skill->latestReview)
           <div class="bg-amberNote/60 border border-amber-200/70 rounded-xl p-3.5 mb-5">
@@ -153,15 +153,15 @@ Editorial standard: We test every AI skill in real workflows and update it based
           <ul class="space-y-2.5 text-xs text-muted leading-relaxed">
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span><strong>No Paid Rankings:</strong> Tool and skill creators cannot pay for higher placement.</span>
+              <span><strong>AI-assisted catalog:</strong> We use automation to discover skills and draft their catalog pages.</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span><strong>Evidence-Based Reviews:</strong> Reviewers describe which model they used and what they tested.</span>
+              <span><strong>Community reviews:</strong> Reviewers describe which model they used and what they tested.</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span><strong>Copy-Ready Templates:</strong> Each skill comes with ready-to-use system instructions.</span>
+              <span><strong>Examples:</strong> Sample inputs and outputs illustrate how a skill can be used.</span>
             </li>
           </ul>
         </div>

@@ -9,7 +9,7 @@
 @endpush
 
 @section('status-message')
-{{ $skill->verified_at ? 'Editorially verified skill' : 'AI skill directory' }}
+{{ $skill->verified_at ? 'Approved catalog listing' : 'AI skill directory' }}
 @endsection
 
 @section('status-meta')
@@ -20,7 +20,7 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
 <a href="{{ route('welcome') }}" class="hover:text-emeraldTrust transition-colors">← All Skills</a>
         <a href="#system-instructions" class="hover:text-emeraldTrust transition-colors">System Instructions</a>
         @if ($skill->sample_input || $skill->sample_output)
-        <a href="#test-evidence" class="hover:text-emeraldTrust transition-colors">Test Evidence & Sample Output</a>
+        <a href="#test-evidence" class="hover:text-emeraldTrust transition-colors">Input & Output Examples</a>
         @endif
         <a href="#reviews" class="hover:text-emeraldTrust transition-colors">Community Reviews (<span id="navReviewCount">{{ $skill->approved_reviews_count }}</span>)</a>
 @endsection
@@ -47,10 +47,10 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
           @if ($skill->verified_at)
           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emeraldTrust/10 text-emeraldTrust text-xs font-semibold">
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            Editor Verified Skill
+            Listing Approved
           </span>
           <span class="text-xs font-mono text-muted px-2.5 py-1 rounded-md border border-borderline bg-white">
-            Last tested: {{ $skill->verified_at->format('F j, Y') }}
+            Approved on: {{ $skill->verified_at->format('F j, Y') }}
           </span>
           @endif
           @if ($skill->license)
@@ -95,8 +95,8 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
               SH
             </div>
             <div>
-              <div class="text-xs font-semibold text-ink">Editorial Review</div>
-              <div class="text-[11px] text-muted">Skill Evaluation</div>
+              <div class="text-xs font-semibold text-ink">Skill Overview</div>
+              <div class="text-[11px] text-muted">Catalog Summary</div>
             </div>
           </div>
 
@@ -153,14 +153,14 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
         </section>
         @if ($skill->sample_input || $skill->sample_output)
           <section id="test-evidence" class="bg-white border border-borderline rounded-2xl p-6 space-y-4">
-            <h2 class="font-serif text-2xl">Test Evidence</h2>
+            <h2 class="font-serif text-2xl">Input & Output Examples</h2>
             @if ($skill->sample_output)
-              <h3 class="text-sm font-semibold">Skill Output</h3>
+              <h3 class="text-sm font-semibold">Example Output</h3>
               <pre class="p-4 bg-[#F3F1EC] rounded-xl text-xs whitespace-pre-wrap break-words"><code>{{ $skill->sample_output }}</code></pre>
             @endif
             @if ($skill->sample_input)
               <details>
-                <summary class="cursor-pointer text-sm font-semibold">Input Code</summary>
+                <summary class="cursor-pointer text-sm font-semibold">Example Input</summary>
                 <pre class="mt-3 p-4 bg-[#F3F1EC] rounded-xl text-xs overflow-x-auto"><code>{{ $skill->sample_input }}</code></pre>
               </details>
             @endif
