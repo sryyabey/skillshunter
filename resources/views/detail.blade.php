@@ -206,6 +206,13 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
         </section>
       </div>
       <aside class="lg:col-span-4 space-y-6">
+        @if ($skill->source_url && \Illuminate\Support\Str::isUrl($skill->source_url, ['http', 'https']))
+          <div class="bg-white border border-borderline rounded-2xl p-5">
+            <a href="{{ $skill->source_url }}" class="text-sm font-semibold text-emeraldTrust underline underline-offset-4 hover:text-ink">
+              View original skill <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        @endif
         @if ($skill->compatibility)
           <div class="bg-white border border-borderline rounded-2xl p-5">
             <h3 class="font-serif text-lg mb-3">Model Compatibility</h3>
