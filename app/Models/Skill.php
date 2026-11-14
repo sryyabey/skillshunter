@@ -17,7 +17,7 @@ class Skill extends Model
     protected $fillable = [
         'category_id', 'title', 'slug', 'summary', 'editor_note', 'instructions', 'license',
         'version', 'verified_at', 'is_published', 'use_cases', 'limitations', 'compatibility',
-        'setup_tip', 'sample_input', 'sample_output', 'source_url',
+        'setup_tip', 'sample_input', 'sample_output', 'source_url', 'source_markdown',
         'seo_title', 'seo_description', 'seo_keywords',
     ];
 
@@ -37,6 +37,11 @@ class Skill extends Model
     protected function published(Builder $query): void
     {
         $query->where('is_published', true);
+    }
+
+    public function publicInstructions(): ?string
+    {
+        return filled($this->source_url) ? $this->source_markdown : $this->instructions;
     }
 
     public function category(): BelongsTo

@@ -47,15 +47,23 @@ class SkillController extends Controller
         $category = Category::where('slug', $data['category_slug'])->firstOrFail();
         $attributes = Arr::except($data, ['slug', 'category_slug']) + ['category_id' => $category->id];
 
+        if (array_key_exists('instructions', $attributes) && $attributes['instructions'] === null) {
+            $attributes['instructions'] = '';
+        }
+
         // Perform initial creation outside the lock transaction so a unique-key retry sees the committed row.
-        $skill = Skill::firstOrCreate(['slug' => $data['slug']], $attributes);
+        $skill = Skill::firstOrCreate(['slug' => $data['slug']], $attributes + ['instructions' => '']);
         $created = $skill->wasRecentlyCreated;
 
         if (! $created) {
             $skill = DB::transaction(function () use ($skill, $attributes): Skill {
                 $current = Skill::whereKey($skill->id)->lockForUpdate()->firstOrFail();
                 abort_if($current->is_published, 409, 'Published skills must be edited in Filament.');
-                $current->fill($attributes)->save();
+                $current->fill($attributes);
+                if ($current->isDirty('source_url') && ! array_key_exists('source_markdown', $attributes)) {
+                    $current->source_markdown = null;
+                }
+                $current->save();
 
                 return $current;
             }, attempts: 3);

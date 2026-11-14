@@ -11,6 +11,7 @@ use App\Models\User;
 use Database\Seeders\SkillCatalogSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -33,7 +34,46 @@ class SkillCatalogTest extends TestCase
         $draft = Skill::factory()->create();
         $this->get(route('detail', $draft->slug))->assertNotFound();
         $this->get(route('detail', 'architecture-code-review'))
-            ->assertOk()->assertSee('Input & Output Examples', false)->assertDontSee('Last tested:')->assertSee('System Instructions');
+            ->assertOk()->assertDontSee('Input & Output Examples', false)->assertDontSee('Last tested:')->assertSee('System Instructions');
+    }
+
+    public function test_source_import_replaces_public_generated_instructions_and_downloads_exact_markdown(): void
+    {
+        $source = 'https://github.com/example/project/blob/main/skills/demo/SKILL.md';
+        $raw = 'https://raw.githubusercontent.com/example/project/main/skills/demo/SKILL.md';
+        $markdown = "---\nname: demo\n---\n\n<example>\n";
+        $skill = Skill::factory()->published()->create([
+            'source_url' => $source,
+            'instructions' => 'Generated trigger text',
+            'setup_tip' => 'Run invented.py',
+            'sample_output' => 'Generated example',
+            'limitations' => ['Generated limitation'],
+        ]);
+        $this->get(route('detail', $skill->slug))->assertOk()
+            ->assertSee($source)->assertDontSee('Generated trigger text')->assertDontSee('Copy Instructions');
+        $this->get(route('skills.download', $skill->slug))->assertNotFound();
+
+        Http::preventStrayRequests();
+        Http::fake([$raw => Http::response($markdown)]);
+        $this->artisan('skills:refresh-sources', ['slug' => $skill->slug])->assertSuccessful();
+
+        $this->get(route('detail', $skill->slug))->assertOk()
+            ->assertSee('<example>')->assertDontSee('<example>', false)->assertSee('Copy Instructions')
+            ->assertDontSee('invented.py')->assertDontSee('Generated example')->assertDontSee('Generated limitation');
+        $response = $this->get(route('skills.download', $skill->slug))->assertOk()->assertDownload('SKILL.md');
+        $this->assertSame($markdown, $response->streamedContent());
+    }
+
+    public function test_browse_prioritizes_distinct_repositories_and_hides_empty_review_feed(): void
+    {
+        $other = Skill::factory()->published()->create(['source_url' => 'https://github.com/example/other/blob/main/SKILL.md']);
+        $older = Skill::factory()->published()->create(['source_url' => 'https://github.com/example/same/blob/main/old/SKILL.md']);
+        $newer = Skill::factory()->published()->create(['source_url' => 'https://github.com/example/same/blob/main/new/SKILL.md']);
+
+        $this->get(route('welcome'))->assertOk()
+            ->assertSeeInOrder([$newer->title, $other->title, $older->title])
+            ->assertSee('<meta name="description"', false)
+            ->assertDontSee('Latest Field Reports')->assertDontSee('0 reviews');
     }
 
     public function test_review_stays_hidden_until_approved(): void

@@ -9,9 +9,12 @@ use App\Models\SkillSuggestion;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SkillCatalogController extends Controller
 {
@@ -20,7 +23,7 @@ class SkillCatalogController extends Controller
         $search = trim($request->string('q')->limit(100, '')->toString());
         $category = $request->string('category')->toString();
 
-        $skills = Skill::published()
+        $query = Skill::published()
             ->with(['category', 'latestReview'])
             ->withCount(['approvedReviews', 'votes'])
             ->when($category, fn (Builder $query) => $query->whereRelation('category', 'slug', $category))
@@ -31,8 +34,11 @@ class SkillCatalogController extends Controller
                         ->orWhereHas('category', fn (Builder $query) => $query->whereLike('name', '%'.$search.'%'));
                 });
             })
-            ->orderByDesc('verified_at')->orderByDesc('id')
-            ->paginate(12)->withQueryString();
+            ->orderByDesc('verified_at')->orderByDesc('id');
+
+        $skills = $search === '' && $category === ''
+            ? $this->browseCatalog($query)
+            : $query->paginate(12)->withQueryString();
 
         return view('welcome', [
             'skills' => $skills,
@@ -44,6 +50,29 @@ class SkillCatalogController extends Controller
             'search' => $search,
             'category' => $category,
         ]);
+    }
+
+    private function browseCatalog(Builder $query): LengthAwarePaginator
+    {
+        $listing = Skill::published()->orderByDesc('verified_at')->orderByDesc('id')->get(['id', 'source_url']);
+        $rank = $listing->pluck('id')->flip();
+        $ordered = $listing->groupBy(function (Skill $skill): string {
+            if (preg_match('~\Ahttps://github\.com/([\w.-]+/[\w.-]+)(?:/|$)~i', $skill->source_url ?? '', $source)) {
+                return strtolower($source[1]);
+            }
+
+            return 'skill:'.$skill->id;
+        })->flatMap(fn ($group) => $group->values()->map(
+            fn (Skill $skill, int $position): array => ['id' => $skill->id, 'position' => $position],
+        ))->sortBy(fn (array $entry) => [$entry['position'], $rank[$entry['id']]])->pluck('id')->values();
+
+        $page = Paginator::resolveCurrentPage();
+        $ids = $ordered->forPage($page, 12)->values();
+        $skills = $query->whereKey($ids->all())->get()->sortBy(fn (Skill $skill) => $ids->search($skill->id))->values();
+
+        return (new LengthAwarePaginator($skills, $ordered->count(), 12, $page, [
+            'path' => Paginator::resolveCurrentPath(),
+        ]))->withQueryString();
     }
 
     public function show(Request $request, string $slug): View
@@ -61,6 +90,21 @@ class SkillCatalogController extends Controller
             'related' => Skill::published()->where('category_id', $skill->category_id)
                 ->whereKeyNot($skill->id)->withCount('approvedReviews')->latest()->limit(4)->get(),
         ]);
+    }
+
+    public function download(string $slug): StreamedResponse
+    {
+        $skill = Skill::published()->where('slug', $slug)->firstOrFail();
+        $instructions = $skill->publicInstructions();
+        abort_unless(filled($instructions), 404);
+
+        return response()->streamDownload(
+            static function () use ($instructions): void {
+                echo $instructions;
+            },
+            filled($skill->source_url) ? 'SKILL.md' : $skill->slug.'.md',
+            ['Content-Type' => 'text/markdown; charset=UTF-8'],
+        );
     }
 
     public function review(Request $request): RedirectResponse

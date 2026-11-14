@@ -59,6 +59,29 @@ class SkillApiTest extends TestCase
         $this->get('/skills/integration-example')->assertNotFound();
     }
 
+    public function test_source_ingestion_preserves_markdown_and_replaces_it_when_the_link_changes(): void
+    {
+        $category = Category::factory()->create();
+        $path = '/api/v1/skills/source-example';
+        $markdown = "\n---\nname: demo\n---\n\nOriginal instructions.\n";
+        $payload = [
+            'category_slug' => $category->slug,
+            'title' => 'Source Example',
+            'summary' => 'Demonstrates source ingestion.',
+            'source_url' => 'https://github.com/example/project/blob/main/SKILL.md',
+        ];
+
+        $this->withToken(self::TOKEN)->putJson($path, [...$payload, 'source_markdown' => $markdown])
+            ->assertCreated()->assertJsonPath('data.instructions', $markdown);
+
+        $this->putJson($path, [
+            ...$payload,
+            'source_url' => 'https://example.com/replacement',
+            'instructions' => 'Replacement instructions.',
+        ])->assertOk()->assertJsonPath('data.instructions', 'Replacement instructions.');
+        $this->assertNull(Skill::where('slug', 'source-example')->sole()->source_markdown);
+    }
+
     public function test_ingestion_rejects_invalid_content_and_editorial_fields(): void
     {
         $this->withToken(self::TOKEN)->putJson('/api/v1/skills/Invalid_Slug', [

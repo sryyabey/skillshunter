@@ -8,6 +8,8 @@ Route::get('/', [SkillCatalogController::class, 'index'])->name('welcome');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/skills/{slug}', [SkillCatalogController::class, 'show'])->name('detail');
 
+Route::get('/skills/{slug}/download', [SkillCatalogController::class, 'download'])->name('skills.download');
+
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
 

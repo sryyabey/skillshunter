@@ -3,6 +3,7 @@
 @section('title', 'skillshunter.net — Curated AI Skills & Community Reviews')
 
 @push('meta')
+  <meta name="description" content="Find AI agent skills by topic, read original SKILL.md instructions, and share what worked in your workflow.">
   <meta name="google-site-verification" content="CoBJLXA_fglP9V5yZuou4Ai-DAyBYPXONxZjgvPmhis" />
 @endpush
 
@@ -17,7 +18,9 @@ Skills are collected from public sources and approved for listing. Community rev
 @section('navigation')
 <a href="#skill-directory" class="text-ink hover:text-emeraldTrust transition-colors">Skill Directory</a>
         <a href="#editorial-standards" class="hover:text-emeraldTrust transition-colors">How We List Skills</a>
+        @if ($feed->isNotEmpty())
         <a href="#community-feed" class="hover:text-emeraldTrust transition-colors">Latest Reviews</a>
+        @endif
 @endsection
 
 @section('header-actions')
@@ -37,7 +40,7 @@ Skills are collected from public sources and approved for listing. Community rev
         Find AI skills for <span class="italic text-emeraldTrust">your workflow</span>.
       </h1>
       <p class="text-base sm:text-lg text-muted leading-relaxed mb-8">
-        Browse agent skills, compare use cases and limitations, and open the original source. Share your results after trying a skill.
+        Browse agent skills, compare use cases, and open the original source. Share your results after trying a skill.
       </p>
       <form action="{{ route('welcome') }}" method="GET" aria-label="Filter skills" class="flex flex-col sm:flex-row gap-3">
         <div class="relative flex-1">
@@ -83,9 +86,11 @@ Skills are collected from public sources and approved for listing. Community rev
               </span>
               @endif
             </div>
+            @if ($skill->approved_reviews_count)
             <div class="flex items-center gap-3 text-xs text-muted font-mono">
               <span>{{ $skill->approved_reviews_count }} reviews</span>
             </div>
+            @endif
           </div>
           <h3 class="font-serif text-2xl font-medium text-ink mb-2">
             <a href="{{ route('detail', $skill->slug) }}" class="hover:text-emeraldTrust">{{ $skill->title }}</a>
@@ -108,9 +113,9 @@ Skills are collected from public sources and approved for listing. Community rev
             <div class="flex items-center gap-2">
               <form method="POST" action="{{ route('skills.vote', $skill->slug) }}">
                 @csrf
-                <button class="px-3 py-1.5 text-xs border border-borderline rounded-lg">▲ Helpful · {{ $skill->votes_count }}</button>
+                <button class="px-3 py-1.5 text-xs border border-borderline rounded-lg">▲ Helpful @if ($skill->votes_count) · {{ $skill->votes_count }} @endif</button>
               </form>
-              <a href="{{ route('detail', $skill->slug) }}#system-instructions" class="px-3 py-1.5 text-xs bg-[#F3F1EC] rounded-lg">View & Copy Instructions</a>
+              <a href="{{ route('detail', $skill->slug) }}#system-instructions" class="px-3 py-1.5 text-xs bg-[#F3F1EC] rounded-lg">View Instructions</a>
             </div>
 
             <a href="{{ route('detail', $skill->slug) }}#write-review" class="text-xs font-semibold text-emeraldTrust hover:underline">+ Add a Review</a>
@@ -122,8 +127,9 @@ Skills are collected from public sources and approved for listing. Community rev
           {{ $skills->links() }}
         </div>
       </div>
-      <aside id="community-feed" class="lg:col-span-4 space-y-8">
-        <div class="grid gap-4 bg-white border border-borderline rounded-2xl p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+      <aside class="lg:col-span-4 space-y-8">
+        @if ($feed->isNotEmpty())
+        <div id="community-feed" class="grid gap-4 bg-white border border-borderline rounded-2xl p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <h3 class="font-serif text-lg font-medium text-ink">Latest Field Reports</h3>
             <span class="inline-flex items-center gap-1.5 text-[11px] font-mono text-emeraldTrust bg-emeraldTrust/10 px-2 py-0.5 rounded-full">
@@ -132,7 +138,7 @@ Skills are collected from public sources and approved for listing. Community rev
           </div>
 
           <div class="space-y-4 divide-y divide-borderline">
-            @forelse ($feed as $review)
+            @foreach ($feed as $review)
               <article class="pt-3 first:pt-0 text-xs">
                 <div class="flex justify-between gap-2">
                   <strong>{{ $review->author }}</strong>
@@ -141,13 +147,12 @@ Skills are collected from public sources and approved for listing. Community rev
                 <a class="text-emeraldTrust" href="{{ route('detail', $review->skill->slug) }}#reviews">{{ $review->skill->title }}</a>
                 <p class="mt-1 text-muted">{{ $review->body }}</p>
               </article>
-            @empty
-              <p class="text-xs text-muted">No reviews yet.</p>
-            @endforelse
+            @endforeach
           </div>
 
           <a href="{{ $reviewSkills->isNotEmpty() ? '#share-review' : '#suggest-skill' }}" class="block py-2.5 px-4 text-center border border-ink text-ink hover:bg-ink hover:text-paper text-xs font-semibold rounded-xl transition-colors">+ Share Your Experience</a>
         </div>
+        @endif
         <div id="editorial-standards" class="bg-[#F3F1EC] border border-borderline rounded-2xl p-5">
           <h4 class="font-serif text-base font-semibold text-ink mb-2">How We List Skills</h4>
           <ul class="space-y-2.5 text-xs text-muted leading-relaxed">
@@ -157,11 +162,11 @@ Skills are collected from public sources and approved for listing. Community rev
             </li>
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span>We approve entries for listing. Each entry links to its original source when available.</span>
+              <span>Catalog editors record listing approval when they choose to include a skill. Linked source files provide the original instructions when available.</span>
             </li>
             <li class="flex items-start gap-2">
               <span class="text-emeraldTrust font-bold">✓</span>
-              <span>Sample inputs and outputs illustrate usage. Community reviews share what happened when readers tried a skill.</span>
+              <span>Readers can submit first-hand results. Reviews appear after moderation.</span>
             </li>
           </ul>
         </div>

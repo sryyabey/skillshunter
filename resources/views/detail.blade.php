@@ -1,5 +1,11 @@
 @extends('layouts.public')
 
+@php
+  $hasSource = filled($skill->source_url);
+  $sourceUrl = $hasSource && \Illuminate\Support\Str::isUrl($skill->source_url, ['http', 'https']) ? $skill->source_url : null;
+  $instructions = $skill->publicInstructions();
+@endphp
+
 @section('title')
 {{ $skill->seo_title ?: $skill->title.' — skillshunter.net' }}
 @endsection
@@ -19,10 +25,7 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
 @section('navigation')
 <a href="{{ route('welcome') }}" class="hover:text-emeraldTrust transition-colors">← All Skills</a>
         <a href="#system-instructions" class="hover:text-emeraldTrust transition-colors">System Instructions</a>
-        @if ($skill->sample_input || $skill->sample_output)
-        <a href="#test-evidence" class="hover:text-emeraldTrust transition-colors">Input & Output Examples</a>
-        @endif
-        <a href="#reviews" class="hover:text-emeraldTrust transition-colors">Community Reviews (<span id="navReviewCount">{{ $skill->approved_reviews_count }}</span>)</a>
+        <a href="#reviews" class="hover:text-emeraldTrust transition-colors">Community Reviews @if ($skill->approved_reviews_count) ({{ $skill->approved_reviews_count }}) @endif</a>
 @endsection
 
 @section('header-actions')
@@ -68,18 +71,19 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
         </p>
       </div>
       <div class="flex items-center gap-4 bg-white border border-borderline rounded-2xl p-4 shrink-0">
+        @if ($skill->approved_reviews_count)
         <div class="text-center px-3 border-r border-borderline">
           <div id="heroReviewCount" class="font-serif text-3xl font-semibold text-emeraldTrust">{{ $skill->approved_reviews_count }}</div>
           <div class="text-[11px] font-mono text-muted mt-0.5">REVIEWS</div>
         </div>
+        @endif
         <div class="text-center px-2">
           <form method="POST" action="{{ route('skills.vote', $skill->slug) }}">
             @csrf
             <button class="flex flex-col items-center group">
             <span class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-borderline group-hover:border-emeraldTrust group-hover:text-emeraldTrust transition-colors">
-              ▲ <span id="helpfulCounter">{{ $skill->votes_count }}</span>
+              ▲ Helpful @if ($skill->votes_count) · {{ $skill->votes_count }} @endif
             </span>
-            <span class="text-[11px] font-mono text-muted mt-1">HELPFUL</span>
           </button>
           </form>
         </div>
@@ -88,7 +92,7 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
   </section>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-      <div class="lg:col-span-8 space-y-10">
+      <div class="lg:col-span-8 min-w-0 space-y-10">
         <section class="bg-white border border-borderline rounded-2xl p-6 sm:p-7">
           <div class="flex items-center gap-3 mb-4 pb-4 border-b border-borderline">
             <div class="w-9 h-9 rounded-full bg-[#F3F1EC] border border-borderline flex items-center justify-center font-serif font-semibold text-ink">
@@ -104,7 +108,7 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
             {{ $skill->editor_note ?? $skill->summary }}
           </p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid gap-4">
             <div class="bg-[#F3F1EC]/70 border border-borderline rounded-xl p-4">
               <h3 class="text-xs font-bold uppercase tracking-wider text-emeraldTrust mb-2">✓ When to Use It</h3>
               <ul class="space-y-1.5 text-xs text-ink/85">
@@ -115,63 +119,36 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
                 @endforelse
               </ul>
             </div>
-            <div class="bg-amberNote/60 border border-amber-200/80 rounded-xl p-4">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-amber-900 mb-2">! Limitations</h3>
-              <ul class="space-y-1.5 text-xs text-ink/85">
-                @forelse ($skill->limitations ?? [] as $item)
-                  <li>• {{ $item }}</li>
-                @empty
-                  <li>No notes available.</li>
-                @endforelse
-              </ul>
-            </div>
           </div>
         </section>
-        <section id="system-instructions" data-skill-title="{{ $skill->title }}" data-skill-slug="{{ $skill->slug }}" class="space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 class="font-serif text-2xl font-medium text-ink">Skill System Instructions</h2>
-              <p class="text-xs text-muted">Paste these instructions into your system message or save them as <code>SKILL.md</code> in the project root.</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="downloadSkillMd()" class="px-3 py-2 text-xs font-medium border border-borderline bg-white hover:border-ink rounded-lg transition-colors">
-                ↓ Download .md
-              </button>
-              <button onclick="copyFullPrompt(this)" class="px-4 py-2 text-xs font-semibold bg-ink text-paper hover:bg-emeraldTrust rounded-lg transition-colors">
+        <section id="system-instructions" class="space-y-3">
+          <h2 class="font-serif text-2xl font-medium text-ink">{{ $hasSource ? 'SKILL.md' : 'System Instructions' }}</h2>
+          @if ($hasSource && $sourceUrl)
+            <p class="text-xs text-muted">
+              <a href="{{ $sourceUrl }}" class="underline underline-offset-4">Open the original skill</a>
+              @if ($skill->slug === 'github-vercel-labs-agent-skills-skills-react-best-practices-4d22a63f8b8e')
+                · <a href="https://github.com/vercel-labs/agent-skills/blob/main/skills/react-best-practices/AGENTS.md" class="underline underline-offset-4">Read the full rules and code examples</a>
+              @endif
+            </p>
+          @endif
+          @if (filled($instructions))
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="{{ route('skills.download', $skill->slug) }}" class="px-3 py-2 text-xs font-medium border border-borderline bg-white rounded-lg">↓ Download .md</a>
+              <button type="button" id="copyInstructions" command="--copy" commandfor="skillPromptText" class="px-4 py-2 text-xs font-semibold bg-ink text-paper hover:bg-emeraldTrust rounded-lg">
                 Copy Instructions
               </button>
+              <span id="copyStatus" role="status" class="text-xs text-muted"></span>
             </div>
-          </div>
-
-          <div class="bg-[#181817] text-[#F3F1EC] rounded-2xl p-5 sm:p-6 border border-ink shadow-sm">
-            <div class="flex items-center justify-between text-[11px] font-mono text-white/50 pb-3 mb-3 border-b border-white/10">
-              <span>SYSTEM_INSTRUCTION.md</span>
-              <span></span>
-            </div>
-            <pre id="skillPromptText" class="font-mono text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap text-[#EAE7DF]">{{ $skill->instructions }}</pre>
-          </div>
+            <pre class="bg-[#181817] text-[#EAE7DF] rounded-2xl p-5 sm:p-6 font-mono text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap break-words"><code id="skillPromptText">{{ $instructions }}</code></pre>
+          @endif
         </section>
-        @if ($skill->sample_input || $skill->sample_output)
-          <section id="test-evidence" class="bg-white border border-borderline rounded-2xl p-6 space-y-4">
-            <h2 class="font-serif text-2xl">Input & Output Examples</h2>
-            @if ($skill->sample_output)
-              <h3 class="text-sm font-semibold">Example Output</h3>
-              <pre class="p-4 bg-[#F3F1EC] rounded-xl text-xs whitespace-pre-wrap break-words"><code>{{ $skill->sample_output }}</code></pre>
-            @endif
-            @if ($skill->sample_input)
-              <details>
-                <summary class="cursor-pointer text-sm font-semibold">Example Input</summary>
-                <pre class="mt-3 p-4 bg-[#F3F1EC] rounded-xl text-xs overflow-x-auto"><code>{{ $skill->sample_input }}</code></pre>
-              </details>
-            @endif
-          </section>
-        @endif
         <section id="reviews" class="space-y-6 pt-2">
           <div class="flex flex-wrap items-end justify-between gap-2 border-b border-borderline pb-3">
             <div>
               <h2 class="font-serif text-2xl font-medium text-ink">Community Reviews & Field Notes</h2>
               <p class="text-xs text-muted">Tried this skill on your own project? Share the model you used and the results you got.</p>
             </div>
+            @if ($skill->approved_reviews_count)
             <form method="GET" action="{{ route('detail', $skill->slug) }}#reviews" aria-label="Filter reviews" class="flex gap-2">
               <select name="verdict" aria-label="Filter reviews by verdict" class="px-3 py-1.5 border border-borderline rounded-lg text-xs">
                 <option value="">All Reviews</option>
@@ -181,6 +158,7 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
               </select>
               <button class="px-3 py-1.5 border border-borderline rounded-lg text-xs">Filter</button>
             </form>
+            @endif
           </div>
           <div id="write-review" class="bg-white border border-emeraldTrust/30 rounded-2xl p-5 scroll-mt-20">
             <h3 id="catalog-review-heading" class="font-serif text-xl mb-3">Add Your Review</h3>
@@ -200,19 +178,14 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
               </form>
             </article>
           @empty
-            <p class="text-sm text-muted">No reviews to show.</p>
+            @if ($skill->approved_reviews_count)
+              <p class="text-sm text-muted">No reviews match this filter.</p>
+            @endif
           @endforelse
           {{ $reviews->links() }}
         </section>
       </div>
       <aside class="lg:col-span-4 space-y-6">
-        @if ($skill->source_url && \Illuminate\Support\Str::isUrl($skill->source_url, ['http', 'https']))
-          <div class="bg-white border border-borderline rounded-2xl p-5">
-            <a href="{{ $skill->source_url }}" class="text-sm font-semibold text-emeraldTrust underline underline-offset-4 hover:text-ink">
-              View original skill <span aria-hidden="true">↗</span>
-            </a>
-          </div>
-        @endif
         @if ($skill->compatibility)
           <div class="bg-white border border-borderline rounded-2xl p-5">
             <h3 class="font-serif text-lg mb-3">Model Compatibility</h3>
@@ -227,17 +200,11 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
             </div>
           </div>
         @endif
-        @if ($skill->setup_tip)
-          <div class="bg-[#F3F1EC] border border-borderline rounded-2xl p-5">
-            <h3 class="font-serif text-base font-semibold mb-2">Quick Setup Tip</h3>
-            <p class="text-xs text-muted leading-relaxed">{{ $skill->setup_tip }}</p>
-          </div>
-        @endif
         @if ($related->isNotEmpty())
           <div class="bg-white border border-borderline rounded-2xl p-5">
             <h3 class="font-serif text-base font-semibold mb-3">Related Skills</h3>
             @foreach ($related as $item)
-              <a href="{{ route('detail', $item->slug) }}" class="block py-2 text-xs hover:text-emeraldTrust">{{ $item->title }} · {{ $item->approved_reviews_count }} reviews</a>
+              <a href="{{ route('detail', $item->slug) }}" class="block py-2 text-xs hover:text-emeraldTrust">{{ $item->title }} @if ($item->approved_reviews_count) · {{ $item->approved_reviews_count }} reviews @endif</a>
             @endforeach
           </div>
         @endif
@@ -248,28 +215,36 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
 
 @push('scripts')
   <script>
-    async function copyFullPrompt(btn) {
-      const text = document.getElementById('skillPromptText').textContent;
-      await navigator.clipboard.writeText(text);
-      const orig = btn.textContent;
-      btn.textContent = "Copied ✓";
-      btn.classList.replace('bg-ink', 'bg-emeraldTrust');
-      setTimeout(() => {
-        btn.textContent = orig;
-        btn.classList.replace('bg-emeraldTrust', 'bg-ink');
-      }, 1800);
-    }
+    (() => {
+      const button = document.getElementById('copyInstructions');
+      if (!button) return;
 
-    function downloadSkillMd() {
-      const text = document.getElementById('skillPromptText').textContent;
-      const blob = new Blob([`# ${document.getElementById('system-instructions').dataset.skillTitle}\n\n${text}`], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = document.getElementById('system-instructions').dataset.skillSlug + '-skill.md';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+      const status = document.getElementById('copyStatus');
+      let timeout;
+      let lastMessage = '';
 
+      async function copyInstructions(target) {
+        let message;
+        try {
+          await navigator.clipboard.writeText(target.textContent);
+          message = 'Copied';
+        } catch {
+          message = 'Copy failed. Use Download .md to save the instructions.';
+        }
+        if (message === lastMessage) message += '\u00a0';
+        lastMessage = message;
+        status.textContent = message;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => { status.textContent = ''; }, 2500);
+      }
+
+      if ('CommandEvent' in window && 'commandForElement' in button) {
+        document.getElementById(button.getAttribute('commandfor')).addEventListener('command', (event) => {
+          if (event.command === '--copy' && event.source === button) copyInstructions(event.currentTarget);
+        });
+      } else {
+        button.addEventListener('click', () => copyInstructions(document.getElementById(button.getAttribute('commandfor'))));
+      }
+    })();
   </script>
 @endpush
