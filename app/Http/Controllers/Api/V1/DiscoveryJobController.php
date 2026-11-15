@@ -14,9 +14,11 @@ class DiscoveryJobController extends Controller
 {
     private const MAX_ATTEMPTS = 2;
 
-    public function claim(): JsonResponse
+    public function claim(Request $request): JsonResponse
     {
-        return DB::transaction(function (): JsonResponse {
+        $sourceInventory = $request->boolean('source_inventory');
+
+        return DB::transaction(function () use ($sourceInventory): JsonResponse {
             SkillDiscoveryJob::where('status', 'queued')->where('attempts', '>=', self::MAX_ATTEMPTS)
                 ->update(['status' => 'failed', 'available_at' => null]);
 
@@ -25,6 +27,8 @@ class DiscoveryJobController extends Controller
                 ->update(['status' => 'failed', 'lease_token' => null, 'lease_until' => null, 'error' => 'Worker lease expired.']);
 
             $job = SkillDiscoveryJob::where('attempts', '<', self::MAX_ATTEMPTS)
+                ->when($sourceInventory, fn (Builder $query) => $query->whereNotNull('source_file_id'),
+                    fn (Builder $query) => $query->whereNull('source_file_id'))
                 ->where(fn (Builder $query) => $query
                     ->where(fn (Builder $queued) => $queued->where('status', 'queued')
                         ->where(fn (Builder $available) => $available->whereNull('available_at')->orWhere('available_at', '<=', now())))
@@ -44,6 +48,7 @@ class DiscoveryJobController extends Controller
                 'id' => $job->id, 'topic' => $job->topic, 'category_slug' => $job->category->slug,
                 'result_limit' => $job->result_limit, 'lease_token' => $job->lease_token,
                 'results' => $job->results ?? [],
+                'source' => $job->source_snapshot,
             ]]);
         }, attempts: 3);
     }

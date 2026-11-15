@@ -2,14 +2,53 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
 use App\Models\Skill;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SkillSourceScanTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_queue_skips_catalog_and_duplicate_sources_and_claims_only_the_pinned_job(): void
+    {
+        $category = Category::factory()->create(['slug' => 'software-development']);
+        $skill = Skill::factory()->for($category)->published()->create();
+        $commit = str_repeat('a', 40);
+        $known = str_repeat('b', 40);
+        $fresh = str_repeat('c', 40);
+        $repository = DB::table('skill_source_repositories')->insertGetId([
+            'github_id' => 123, 'full_name' => 'example/skills', 'default_branch' => 'main', 'last_scanned_commit' => $commit,
+        ]);
+
+        foreach ([
+            ['existing/SKILL.md', $known, $skill->id],
+            ['existing-copy/SKILL.md', $known, null],
+            ['new/SKILL.md', $fresh, null],
+            ['new-copy/SKILL.md', $fresh, null],
+        ] as [$path, $blob, $skillId]) {
+            DB::table('skill_source_files')->insert([
+                'skill_source_repository_id' => $repository, 'path' => $path, 'path_hash' => hash('sha256', $path),
+                'commit_sha' => $commit, 'blob_sha' => $blob, 'skill_id' => $skillId,
+            ]);
+        }
+
+        $this->artisan('skills:queue-sources')->expectsOutput('Preview: 1 source(s).')->assertSuccessful();
+        $this->assertDatabaseCount('skill_discovery_jobs', 0);
+        $this->artisan('skills:queue-sources', ['--apply' => true])->expectsOutput('Queued 1 source(s).')->assertSuccessful();
+        $this->artisan('skills:queue-sources', ['--apply' => true])->expectsOutput('Queued 0 source(s).')->assertSuccessful();
+        $this->assertDatabaseCount('skill_discovery_jobs', 1);
+
+        $token = 'inventory-integration-test-token-at-least-32-characters';
+        config(['skill-integration.token' => $token]);
+        $this->withToken($token)->postJson('/api/v1/discovery-jobs/claim', [])->assertOk()->assertJsonPath('data', null);
+        $this->postJson('/api/v1/discovery-jobs/claim', ['source_inventory' => true])->assertOk()
+            ->assertJsonPath('data.source.path', 'new/SKILL.md')
+            ->assertJsonPath('data.source.commit', $commit)->assertJsonPath('data.source.blob', $fresh);
+    }
 
     public function test_preview_and_repeated_import_reconcile_existing_catalog_records(): void
     {

@@ -13,7 +13,7 @@ class SkillDiscoveryJob extends Model
 
     protected function casts(): array
     {
-        return ['lease_until' => 'datetime', 'available_at' => 'datetime', 'results' => 'array'];
+        return ['lease_until' => 'datetime', 'available_at' => 'datetime', 'results' => 'array', 'source_snapshot' => 'array'];
     }
 
     public function category(): BelongsTo
