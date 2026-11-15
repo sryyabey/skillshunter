@@ -14,15 +14,17 @@ use Illuminate\Support\Str;
     {--repository= : Restrict to a GitHub owner/repo}
     {--category=software-development : Fallback category for editorial review}
     {--limit=5 : Maximum number of new drafts to queue}
+    {--all : Include every eligible source}
     {--apply : Add the selected sources to the editorial queue}')]
 #[Description('Preview or queue unique SKILL.md sources for editorial drafting')]
 class QueueSkillSources extends Command
 {
     public function handle(): int
     {
+        $all = (bool) $this->option('all');
         $limit = filter_var($this->option('limit'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 50]]);
         $category = Category::where('slug', $this->option('category'))->first();
-        if ($limit === false || ! $category) {
+        if ((! $all && $limit === false) || ! $category) {
             $this->error('Use --limit=1..50 and an existing fallback category.');
 
             return self::INVALID;
@@ -76,7 +78,8 @@ class QueueSkillSources extends Command
             }
 
             $this->line($file->full_name.'/'.$file->path);
-            if (++$selected === $limit) {
+            $selected++;
+            if (! $all && $selected === $limit) {
                 break;
             }
         }

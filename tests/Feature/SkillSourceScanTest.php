@@ -56,6 +56,33 @@ class SkillSourceScanTest extends TestCase
             ->assertJsonPath('data.source.commit', $commit)->assertJsonPath('data.source.blob', $fresh);
     }
 
+    public function test_queue_all_includes_every_eligible_file_across_repositories(): void
+    {
+        Category::factory()->create(['slug' => 'software-development']);
+        $commit = str_repeat('a', 40);
+        foreach ([101, 102] as $githubId) {
+            $repository = DB::table('skill_source_repositories')->insertGetId([
+                'github_id' => $githubId, 'full_name' => "example/repo-{$githubId}", 'default_branch' => 'main',
+                'last_scanned_commit' => $commit,
+            ]);
+            for ($number = 0; $number < 30; $number++) {
+                $path = "{$number}/SKILL.md";
+                DB::table('skill_source_files')->insert([
+                    'skill_source_repository_id' => $repository, 'path' => $path, 'path_hash' => hash('sha256', $path),
+                    'commit_sha' => $commit, 'blob_sha' => sha1("{$githubId}/{$path}"),
+                ]);
+            }
+        }
+
+        $this->artisan('skills:queue-sources', ['--all' => true])->expectsOutput('Preview: 60 source(s).')->assertSuccessful();
+        $this->assertDatabaseCount('skill_discovery_jobs', 0);
+        $this->artisan('skills:queue-sources', ['--all' => true, '--apply' => true])
+            ->expectsOutput('Queued 60 source(s).')->assertSuccessful();
+        $this->artisan('skills:queue-sources', ['--all' => true, '--apply' => true])
+            ->expectsOutput('Queued 0 source(s).')->assertSuccessful();
+        $this->assertDatabaseCount('skill_discovery_jobs', 60);
+    }
+
     public function test_filament_displays_inventory_to_users_with_discovery_view_permission(): void
     {
         $editor = User::factory()->create();
