@@ -7,6 +7,7 @@ use App\Models\Skill;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -36,7 +37,7 @@ class SkillQualityReviewTest extends TestCase
             'editor_note' => 'Previous editorial note.',
             'source_url' => 'https://github.com/example/skills/blob/main/SKILL.md',
         ]);
-        $new = Skill::factory()->create(['source_markdown' => 'New instructions.']);
+        $new = Skill::factory()->create(['source_markdown' => 'New instructions.', 'source_url' => 'https://github.com/example/skills/blob/main/new/SKILL.md']);
 
         $this->withToken(str_repeat('i', 40))->postJson(self::ENDPOINT.'/claim')->assertUnauthorized();
 
@@ -87,9 +88,32 @@ class SkillQualityReviewTest extends TestCase
         $this->assertStringContainsString($old->source_url, $modal);
     }
 
+    public function test_review_can_fill_missing_instructions_from_the_verified_github_revision(): void
+    {
+        $commit = str_repeat('a', 40);
+        $skill = Skill::factory()->published()->create([
+            'source_url' => 'https://github.com/example/skills/blob/main/SKILL.md',
+        ]);
+        $raw = "## Setup\nInstall Example CLI.\n";
+        Http::preventStrayRequests();
+        Http::fake(["https://raw.githubusercontent.com/example/skills/{$commit}/SKILL.md" => Http::response($raw)]);
+        $this->withToken(self::TOKEN);
+        $lease = $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data.id', $skill->id)->json('data.lease_token');
+        $this->patchJson(self::ENDPOINT.'/'.$skill->id, [
+            'lease_token' => $lease,
+            'changes' => ['setup_tip' => 'Install Example CLI.'],
+            'source_revision' => ['url' => "https://github.com/example/skills/blob/{$commit}/SKILL.md", 'commit' => $commit],
+        ])->assertOk()->assertJsonPath('data.is_published', false);
+        $skill->refresh();
+        $this->assertSame($raw, $skill->source_markdown);
+        $this->assertSame($commit, $skill->source_commit);
+        $this->assertTrue($skill->ai_review_details['was_published']);
+        $this->assertNotNull($skill->ai_reviewed_at);
+    }
+
     public function test_quality_review_cannot_overwrite_a_concurrent_editor_change(): void
     {
-        $skill = Skill::factory()->published()->create(['source_markdown' => 'Source text.']);
+        $skill = Skill::factory()->published()->create(['source_markdown' => 'Source text.', 'source_url' => 'https://github.com/example/skills/blob/main/SKILL.md']);
         $this->withToken(self::TOKEN);
         $lease = $this->postJson(self::ENDPOINT.'/claim')->assertOk()->json('data.lease_token');
 
