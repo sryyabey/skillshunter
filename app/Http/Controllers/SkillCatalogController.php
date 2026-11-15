@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -41,10 +42,27 @@ class SkillCatalogController extends Controller
             'reviewSkills' => Skill::published()->orderBy('title')->get(['slug', 'title']),
             'feed' => Review::approved()->whereHas('skill', fn (Builder $query) => $query->published())
                 ->with('skill')->latest()->orderByDesc('id')->limit(5)->get(),
+            'catalogStatusMessage' => $this->catalogStatusMessage(),
             'publishedCount' => Skill::published()->count(),
             'search' => $search,
             'category' => $category,
         ]);
+    }
+
+    private function catalogStatusMessage(): string
+    {
+        if (Cache::has('skill-worker-status:controller')) {
+            return 'Checking a skill’s instructions and examples against its source.';
+        }
+        if (Cache::has('skill-worker-status:finder')) {
+            return 'Discovering and cataloging skills from public repositories.';
+        }
+
+        $reviewed = Skill::query()->whereNotNull('ai_reviewed_at')->latest('ai_reviewed_at')->first(['ai_reviewed_at'])?->ai_reviewed_at;
+
+        return $reviewed
+            ? 'Latest source review completed '.$reviewed->locale('en')->diffForHumans().'.'
+            : 'Browse original skill instructions and follow the links to their sources.';
     }
 
     private function browseCatalog(Builder $query): LengthAwarePaginator

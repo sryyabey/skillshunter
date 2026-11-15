@@ -12,6 +12,7 @@ use Database\Seeders\SkillCatalogSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -35,6 +36,35 @@ class SkillCatalogTest extends TestCase
         $this->get(route('detail', $draft->slug))->assertNotFound();
         $this->get(route('detail', 'architecture-code-review'))
             ->assertOk()->assertDontSee('Input & Output Examples', false)->assertDontSee('Last tested:')->assertSee('System Instructions');
+    }
+
+    public function test_home_status_reflects_authenticated_worker_activity_and_expires(): void
+    {
+        $finderToken = str_repeat('f', 40);
+        $controllerToken = str_repeat('q', 40);
+        config(['skill-integration.token' => $finderToken, 'skill-integration.quality_token' => $controllerToken]);
+        $finder = '/api/v1/worker-status/finder';
+        $controller = '/api/v1/worker-status/controller';
+        $run = ['run_id' => (string) Str::uuid(), 'active' => true];
+
+        $this->get('/')->assertOk()->assertSee('Browse original skill instructions');
+        $this->postJson($finder, $run)->assertUnauthorized();
+        $this->withToken($finderToken)->postJson($controller, $run)->assertUnauthorized();
+        $this->postJson($finder, $run)->assertNoContent();
+        $this->get('/')->assertSee('Discovering and cataloging skills');
+
+        $this->withToken($controllerToken)->postJson($controller, $run)->assertNoContent();
+        $this->get('/')->assertSee('Checking a skill’s instructions and examples', false);
+        $this->postJson($controller, ['run_id' => (string) Str::uuid(), 'active' => false])->assertNoContent();
+        $this->get('/')->assertSee('Checking a skill’s instructions and examples', false);
+        $this->postJson($controller, ['active' => false] + $run)->assertNoContent();
+        $this->get('/')->assertSee('Discovering and cataloging skills');
+
+        $skill = Skill::factory()->create(['title' => 'Private draft title']);
+        $skill->forceFill(['ai_reviewed_at' => now()])->save();
+        $this->travel(91)->seconds();
+        $this->get('/')->assertSee('Latest source review completed')->assertDontSee('Private draft title');
+        $this->travelBack();
     }
 
     public function test_catalog_search_ranks_relevant_titles_and_matches_keywords_across_fields(): void

@@ -23,7 +23,7 @@
 @endpush
 
 @section('status-message')
-Skills are collected from public sources and approved for listing. Community reviews share hands-on results.
+{{ $catalogStatusMessage }}
 @endsection
 
 @section('status-meta')
