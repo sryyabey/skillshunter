@@ -82,6 +82,70 @@ class Skill extends Model
         $query->where('is_published', true);
     }
 
+    #[Scope]
+    protected function catalogSearch(Builder $query, string $search): void
+    {
+        preg_match_all('/[\p{L}\p{N}]+(?:[+#]+)?/u', mb_strtolower($search), $matches);
+        $tokens = array_unique($matches[0]);
+        $meaningful = array_diff($tokens, ['a', 'an', 'and', 'for', 'of', 'the', 'to', 've', 'için', 'ile']);
+        $terms = array_slice($meaningful ?: $tokens, 0, 10);
+        if ($terms === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $searchable = ['title', 'seo_keywords', 'seo_title', 'slug', 'summary', 'editor_note', 'use_cases'];
+        $rank = [];
+        $bindings = [];
+        $phrase = '%'.implode('%', array_map(self::escapeSearchTerm(...), $terms)).'%';
+        $rank[] = "CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 30 ELSE 0 END";
+        $bindings[] = $phrase;
+
+        foreach ($terms as $term) {
+            $pattern = '%'.self::escapeSearchTerm($term).'%';
+            $variants = array_map(fn (string $variant): string => '%'.self::escapeSearchTerm($variant).'%', self::searchVariants($term));
+
+            $query->where(function (Builder $match) use ($searchable, $variants): void {
+                foreach ($variants as $variant) {
+                    foreach ($searchable as $field) {
+                        $match->orWhereRaw("LOWER({$field}) LIKE ? ESCAPE '!'", [$variant]);
+                    }
+                    $match->orWhereHas('category', fn (Builder $category) => $category->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$variant]));
+                }
+            });
+
+            foreach (['title' => 18, 'seo_keywords' => 12, 'seo_title' => 8, 'slug' => 5, 'summary' => 3, 'use_cases' => 2] as $field => $weight) {
+                $rank[] = "CASE WHEN LOWER({$field}) LIKE ? ESCAPE '!' THEN {$weight} ELSE 0 END";
+                $bindings[] = $pattern;
+            }
+        }
+
+        $query->orderByRaw('('.implode(' + ', $rank).') DESC', $bindings);
+    }
+
+    private static function escapeSearchTerm(string $term): string
+    {
+        return strtr($term, ['!' => '!!', '%' => '!%', '_' => '!_']);
+    }
+
+    private static function searchVariants(string $term): array
+    {
+        foreach ([
+            ['excel', 'xlsx', 'spreadsheet', 'spreadsheets'],
+            ['word', 'docx'],
+            ['powerpoint', 'pptx', 'presentation', 'presentations', 'slides', 'sunum', 'slayt'],
+            ['automation', 'otomasyon'],
+            ['report', 'rapor'],
+        ] as $group) {
+            if (in_array($term, $group, true)) {
+                return $group;
+            }
+        }
+
+        return [$term];
+    }
+
     public function publicInstructions(): ?string
     {
         return filled($this->source_url) ? $this->source_markdown : $this->instructions;

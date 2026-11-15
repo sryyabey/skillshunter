@@ -37,6 +37,27 @@ class SkillCatalogTest extends TestCase
             ->assertOk()->assertDontSee('Input & Output Examples', false)->assertDontSee('Last tested:')->assertSee('System Instructions');
     }
 
+    public function test_catalog_search_ranks_relevant_titles_and_matches_keywords_across_fields(): void
+    {
+        $strong = Skill::factory()->published()->create([
+            'title' => 'Excel Automation Toolkit', 'summary' => 'Process files in batches.',
+        ]);
+        $keyword = Skill::factory()->published()->create([
+            'title' => 'Workbook Workflow', 'summary' => 'Validate formulas.', 'seo_keywords' => ['spreadsheet automation'],
+        ]);
+        Skill::factory()->published()->create(['title' => 'Excel Templates', 'summary' => 'Download a sample workbook.']);
+        Skill::factory()->create(['title' => 'Excel Automation Draft']);
+
+        $this->get(route('welcome', ['q' => 'excel automation']))->assertOk()
+            ->assertViewHas('skills', fn ($skills): bool => $skills->pluck('id')->all() === [$strong->id, $keyword->id]);
+
+        $this->get(route('welcome', ['q' => 'excel için otomasyon', 'category' => $keyword->category->slug]))->assertOk()
+            ->assertViewHas('skills', fn ($skills): bool => $skills->pluck('id')->all() === [$keyword->id]);
+
+        $this->get(route('welcome', ['q' => '%__']))->assertOk()
+            ->assertViewHas('skills', fn ($skills): bool => $skills->total() === 0);
+    }
+
     public function test_source_import_replaces_public_generated_instructions_and_downloads_exact_markdown(): void
     {
         $source = 'https://github.com/example/project/blob/main/skills/demo/SKILL.md';

@@ -27,13 +27,7 @@ class SkillCatalogController extends Controller
             ->with(['category', 'latestReview'])
             ->withCount(['approvedReviews', 'votes'])
             ->when($category, fn (Builder $query) => $query->whereRelation('category', 'slug', $category))
-            ->when($search !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
-                    $query->whereLike('title', '%'.$search.'%')
-                        ->orWhereLike('summary', '%'.$search.'%')
-                        ->orWhereHas('category', fn (Builder $query) => $query->whereLike('name', '%'.$search.'%'));
-                });
-            })
+            ->when($search !== '', fn (Builder $query) => $query->catalogSearch($search))
             ->orderByDesc('verified_at')->orderByDesc('id');
 
         $skills = $search === '' && $category === ''
