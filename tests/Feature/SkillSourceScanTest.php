@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Skill;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class SkillSourceScanTest extends TestCase
@@ -48,6 +51,31 @@ class SkillSourceScanTest extends TestCase
         $this->postJson('/api/v1/discovery-jobs/claim', ['source_inventory' => true])->assertOk()
             ->assertJsonPath('data.source.path', 'new/SKILL.md')
             ->assertJsonPath('data.source.commit', $commit)->assertJsonPath('data.source.blob', $fresh);
+    }
+
+    public function test_filament_displays_inventory_to_users_with_discovery_view_permission(): void
+    {
+        $editor = User::factory()->create();
+        $editor->assignRole(Role::create(['name' => 'panel_user']));
+        $this->actingAs($editor);
+        $repositories = route('filament.manage.resources.skill-source-repositories.index');
+        $files = route('filament.manage.resources.skill-source-files.index');
+
+        $this->get($repositories)->assertForbidden();
+        $this->get($files)->assertForbidden();
+
+        $editor->givePermissionTo(Permission::create(['name' => 'ViewAny:SkillDiscoveryJob']));
+        $commit = str_repeat('a', 40);
+        $repository = DB::table('skill_source_repositories')->insertGetId([
+            'github_id' => 123, 'full_name' => 'example/skills', 'default_branch' => 'main', 'last_scanned_commit' => $commit,
+        ]);
+        DB::table('skill_source_files')->insert([
+            'skill_source_repository_id' => $repository, 'path' => 'demo/SKILL.md', 'path_hash' => hash('sha256', 'demo/SKILL.md'),
+            'commit_sha' => $commit, 'blob_sha' => str_repeat('b', 40),
+        ]);
+
+        $this->get($repositories)->assertOk()->assertSee('example/skills')->assertSee('Active files');
+        $this->get($files)->assertOk()->assertSee('demo/SKILL.md')->assertSee('Unlinked')->assertSee('No job');
     }
 
     public function test_preview_and_repeated_import_reconcile_existing_catalog_records(): void
