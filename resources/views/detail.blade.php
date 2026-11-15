@@ -4,14 +4,24 @@
   $hasSource = filled($skill->source_url);
   $sourceUrl = $hasSource && \Illuminate\Support\Str::isUrl($skill->source_url, ['http', 'https']) ? $skill->source_url : null;
   $instructions = $skill->publicInstructions();
+  $pageTitle = $skill->seo_title ?: $skill->title.' — skillshunter.net';
+  $pageDescription = $skill->seo_description ?: \Illuminate\Support\Str::limit($skill->summary, 170);
+  $canonicalUrl = route('detail', $skill->slug);
+  $editorNote = trim($skill->editor_note ?? '');
+  $showEditorNote = $editorNote !== '' && $editorNote !== trim($skill->summary);
 @endphp
 
 @section('title')
-{{ $skill->seo_title ?: $skill->title.' — skillshunter.net' }}
+{{ $pageTitle }}
 @endsection
 
 @push('meta')
-  <meta name="description" content="{{ $skill->seo_description ?: \Illuminate\Support\Str::limit($skill->summary, 170) }}">
+  <meta name="description" content="{{ $pageDescription }}">
+  <link rel="canonical" href="{{ $canonicalUrl }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ $pageTitle }}">
+  <meta property="og:description" content="{{ $pageDescription }}">
+  <meta property="og:url" content="{{ $canonicalUrl }}">
 @endpush
 
 @section('status-message')
@@ -93,34 +103,26 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
       <div class="lg:col-span-8 min-w-0 space-y-10">
-        <section class="bg-white border border-borderline rounded-2xl p-6 sm:p-7">
-          <div class="flex items-center gap-3 mb-4 pb-4 border-b border-borderline">
-            <div class="w-9 h-9 rounded-full bg-[#F3F1EC] border border-borderline flex items-center justify-center font-serif font-semibold text-ink">
-              SH
-            </div>
-            <div>
-              <div class="text-xs font-semibold text-ink">Skill Overview</div>
-              <div class="text-[11px] text-muted">Catalog Summary</div>
-            </div>
-          </div>
-
-          <p class="text-sm text-ink/90 leading-relaxed mb-5">
-            {{ $skill->editor_note ?? $skill->summary }}
-          </p>
-
-          <div class="grid gap-4">
-            <div class="bg-[#F3F1EC]/70 border border-borderline rounded-xl p-4">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-emeraldTrust mb-2">✓ When to Use It</h3>
-              <ul class="space-y-1.5 text-xs text-ink/85">
-                @forelse ($skill->use_cases ?? [] as $item)
-                  <li>• {{ $item }}</li>
-                @empty
-                  <li>No notes available.</li>
-                @endforelse
+        @if ($showEditorNote || filled($skill->use_cases))
+          <section class="bg-white border border-borderline rounded-2xl p-6 sm:p-7 space-y-4">
+            @if ($showEditorNote)
+              <h2 class="font-serif text-xl text-ink">Editor's Note</h2>
+              <p class="text-sm text-ink/90 leading-relaxed">{{ $editorNote }}</p>
+            @endif
+            @if (filled($skill->use_cases))
+              @if ($showEditorNote)
+                <h3 class="font-serif text-lg text-ink">When to Use It</h3>
+              @else
+                <h2 class="font-serif text-xl text-ink">When to Use It</h2>
+              @endif
+              <ul class="list-disc pl-5 space-y-1.5 text-sm text-ink/85">
+                @foreach ($skill->use_cases as $item)
+                  <li>{{ $item }}</li>
+                @endforeach
               </ul>
-            </div>
-          </div>
-        </section>
+            @endif
+          </section>
+        @endif
         <section id="system-instructions" class="space-y-3">
           <h2 class="font-serif text-2xl font-medium text-ink">{{ $hasSource ? 'SKILL.md' : 'System Instructions' }}</h2>
           @if ($hasSource && $sourceUrl)
@@ -129,6 +131,8 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
               <a href="{{ $sourceUrl }}" class="block [overflow-wrap:anywhere] text-emeraldTrust underline underline-offset-4">{{ $sourceUrl }}</a>
               @if ($skill->slug === 'github-vercel-labs-agent-skills-skills-react-best-practices-4d22a63f8b8e')
                 <a href="https://github.com/vercel-labs/agent-skills/blob/main/skills/react-best-practices/AGENTS.md" class="inline-block text-emeraldTrust underline underline-offset-4">Read the full rules and code examples</a>
+              @elseif ($skill->slug === 'github-vercel-labs-agent-skills-skills-writing-guidelines-689f91e862ca' && str_contains($instructions ?? '', 'https://raw.githubusercontent.com/vercel-labs/writing-guidelines/main/command.md'))
+                <a href="https://github.com/vercel-labs/writing-guidelines/blob/main/command.md" class="inline-block text-emeraldTrust underline underline-offset-4">Read the full writing guidelines</a>
               @endif
             </div>
           @endif

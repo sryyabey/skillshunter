@@ -1,9 +1,24 @@
 @extends('layouts.public')
 
-@section('title', 'skillshunter.net — Curated AI Skills & Community Reviews')
+@php
+  $pageTitle = 'skillshunter.net — Curated AI Skills & Community Reviews';
+  $pageDescription = 'Find AI agent skills by topic, read original SKILL.md instructions, and share what worked in your workflow.';
+  $canonicalUrl = route('welcome', array_filter([
+    'q' => $search,
+    'category' => $category,
+    'page' => $skills->currentPage() > 1 ? $skills->currentPage() : null,
+  ], fn ($value) => filled($value)));
+@endphp
+
+@section('title', $pageTitle)
 
 @push('meta')
-  <meta name="description" content="Find AI agent skills by topic, read original SKILL.md instructions, and share what worked in your workflow.">
+  <meta name="description" content="{{ $pageDescription }}">
+  <link rel="canonical" href="{{ $canonicalUrl }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ $pageTitle }}">
+  <meta property="og:description" content="{{ $pageDescription }}">
+  <meta property="og:url" content="{{ $canonicalUrl }}">
   <meta name="google-site-verification" content="CoBJLXA_fglP9V5yZuou4Ai-DAyBYPXONxZjgvPmhis" />
 @endpush
 

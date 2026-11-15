@@ -26,6 +26,12 @@ class Skill extends Model
     protected static function booted(): void
     {
         static::saving(function (Skill $skill): void {
+            if ($skill->is_published && preg_match('/^ {0,3}#{1,6} Insert instructions below[.!]?[ \t]*$/mi', $skill->source_markdown ?? '')) {
+                throw ValidationException::withMessages([
+                    'is_published' => 'Replace the placeholder instructions before publishing.',
+                ]);
+            }
+
             if (! $skill->source_commit && ! $skill->getOriginal('source_commit')) {
                 return;
             }
