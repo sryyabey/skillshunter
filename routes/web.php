@@ -17,5 +17,6 @@ Route::middleware('throttle:10,1')->group(function (): void {
     Route::post('/reviews', [SkillCatalogController::class, 'review'])->name('reviews.store');
     Route::post('/skill-suggestions', [SkillCatalogController::class, 'suggest'])->name('suggestions.store');
     Route::post('/skills/{slug}/vote', [SkillCatalogController::class, 'voteSkill'])->name('skills.vote');
+    Route::post('/skills/{slug}/rating', [SkillCatalogController::class, 'rateSkill'])->name('skills.rating.store');
     Route::post('/reviews/{id}/vote', [SkillCatalogController::class, 'voteReview'])->whereNumber('id')->name('reviews.vote');
 });

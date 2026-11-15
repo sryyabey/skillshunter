@@ -74,6 +74,9 @@ class SkillCatalogController extends Controller
     {
         $skill = Skill::published()->where('slug', $slug)->with('category')
             ->withCount(['approvedReviews', 'votes'])->firstOrFail();
+        $ratings = DB::table('skill_ratings')->where('skill_id', $skill->id);
+        $ratingSummary = (clone $ratings)->selectRaw('COUNT(*) AS total, AVG(rating) AS average')->first();
+        $visitorRating = $ratings->where('voter', hash('sha256', $request->session()->token()))->value('rating');
         $verdict = $request->string('verdict')->toString();
         $source = filled($skill->source_url) ? ($skill->source_markdown ?? '') : '';
         $normalizedSource = str_replace("\r\n", "\n", $source);
@@ -97,6 +100,8 @@ class SkillCatalogController extends Controller
         return view('detail', [
             'skill' => $skill,
             'verdict' => $verdict,
+            'ratingSummary' => $ratingSummary,
+            'visitorRating' => $visitorRating,
             'sampleInput' => $sampleInput,
             'sampleOutput' => $sampleOutput,
             'formattedSource' => $formattedSource,
@@ -169,6 +174,21 @@ class SkillCatalogController extends Controller
         ]);
 
         return back();
+    }
+
+    public function rateSkill(Request $request, string $slug): RedirectResponse
+    {
+        $skill = Skill::published()->where('slug', $slug)->firstOrFail();
+        $data = $request->validate(['rating' => ['required', 'integer', 'between:1,5']]);
+
+        DB::table('skill_ratings')->upsert([
+            'skill_id' => $skill->id,
+            'voter' => hash('sha256', $request->session()->token()),
+            'rating' => (int) $data['rating'],
+        ], ['skill_id', 'voter'], ['rating']);
+
+        return redirect()->to(route('detail', $skill->slug).'#skill-rating')
+            ->with('ratingStatus', 'Your rating was saved.');
     }
 
     public function voteReview(Request $request, int $id): RedirectResponse

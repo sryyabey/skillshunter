@@ -174,6 +174,46 @@ class SkillCatalogTest extends TestCase
         $this->assertDatabaseCount('review_votes', 1);
     }
 
+    public function test_visitors_can_rate_a_skill_and_update_their_own_rating(): void
+    {
+        $skill = Skill::factory()->published()->create();
+        $otherSkill = Skill::factory()->published()->create();
+        $detail = route('detail', $skill->slug);
+        $rating = route('skills.rating.store', $skill->slug);
+
+        $this->get($detail)->assertOk()->assertSee('No ratings yet');
+        $this->post($rating, ['rating' => 2])->assertRedirect($detail.'#skill-rating');
+        $this->post($rating, ['rating' => 5])->assertRedirect($detail.'#skill-rating');
+        $this->assertDatabaseCount('skill_ratings', 1);
+        $this->get($detail)->assertOk()
+            ->assertSee('Your rating was saved.')
+            ->assertSee('5.0 / 5')
+            ->assertViewHas('visitorRating', 5);
+
+        $this->withSession(['_token' => str_repeat('b', 40)])
+            ->post($rating, ['rating' => 2])->assertRedirect($detail.'#skill-rating');
+        $this->get($detail)->assertOk()->assertSee('3.5 / 5')->assertSee('2 ratings')
+            ->assertViewHas('visitorRating', 2);
+        $this->get(route('detail', $otherSkill->slug))->assertOk()->assertSee('No ratings yet')
+            ->assertViewHas('visitorRating', null);
+    }
+
+    public function test_skill_ratings_require_a_published_skill_and_an_integer_from_one_to_five(): void
+    {
+        $skill = Skill::factory()->published()->create();
+        $draft = Skill::factory()->create();
+
+        foreach ([0, 6, 2.5, [3], null] as $invalidRating) {
+            $this->from(route('detail', $skill->slug))
+                ->post(route('skills.rating.store', $skill->slug), ['rating' => $invalidRating])
+                ->assertRedirect(route('detail', $skill->slug))
+                ->assertSessionHasErrors('rating');
+        }
+
+        $this->post(route('skills.rating.store', $draft->slug), ['rating' => 3])->assertNotFound();
+        $this->assertDatabaseCount('skill_ratings', 0);
+    }
+
     public function test_filament_catalog_requires_panel_role_and_resource_permission(): void
     {
         $path = route('filament.manage.resources.skills.index');

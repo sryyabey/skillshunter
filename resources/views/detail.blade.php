@@ -25,6 +25,20 @@
 @endpush
 
 @push('meta')
+  <style>
+    .skill-rating-option:has(input:checked),
+    .skill-rating-option:has(~ .skill-rating-option input:checked) {
+      color: #0F5C4C;
+    }
+
+    .skill-rating-option:is(:has(input:checked), :has(~ .skill-rating-option input:checked)) .skill-rating-empty {
+      display: none;
+    }
+
+    .skill-rating-option:is(:has(input:checked), :has(~ .skill-rating-option input:checked)) .skill-rating-filled {
+      display: inline;
+    }
+  </style>
   @if (filled($formattedSource))
     <style>
       .skill-markdown > * + * { margin-block-start: 1rem; }
@@ -124,6 +138,49 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
       <div class="lg:col-span-8 min-w-0 space-y-10">
+        <form id="skill-rating" method="POST" action="{{ route('skills.rating.store', $skill->slug) }}"
+              class="scroll-mt-24 bg-white border border-borderline rounded-2xl p-5 sm:px-7">
+          @csrf
+          <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+            <fieldset>
+              <legend class="font-serif text-xl text-ink">Rate this skill</legend>
+              <div class="flex flex-wrap">
+                @foreach (range(1, 5) as $stars)
+                  <div class="skill-rating-option text-muted">
+                    <input type="radio" id="skill-rating-{{ $stars }}" name="rating" value="{{ $stars }}"
+                           class="peer sr-only" required @checked((int) $visitorRating === $stars)
+                           @error('rating') aria-invalid="true" aria-describedby="skill-rating-error" @enderror>
+                    <label for="skill-rating-{{ $stars }}"
+                           class="flex min-h-12 min-w-12 cursor-pointer items-center justify-center rounded-lg text-2xl hover:bg-emeraldTrust/10 peer-focus-visible:outline-2 peer-focus-visible:outline-emeraldTrust">
+                      <span aria-hidden="true" class="skill-rating-empty">☆</span>
+                      <span aria-hidden="true" class="skill-rating-filled hidden">★</span>
+                      <span class="sr-only">{{ $stars }} {{ Str::plural('star', $stars) }}</span>
+                    </label>
+                  </div>
+                @endforeach
+              </div>
+            </fieldset>
+            <p class="text-sm text-muted">
+              @if ($ratingSummary->total)
+                <span class="font-semibold text-ink">{{ number_format((float) $ratingSummary->average, 1) }} / 5</span>
+                · {{ $ratingSummary->total }} {{ Str::plural('rating', $ratingSummary->total) }}
+              @else
+                No ratings yet
+              @endif
+            </p>
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-3">
+            <button type="submit" class="min-h-12 rounded-lg bg-ink px-4 text-sm font-medium text-paper hover:bg-emeraldTrust focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emeraldTrust">
+              {{ $visitorRating ? 'Update rating' : 'Save rating' }}
+            </button>
+            @if (session('ratingStatus'))
+              <p role="status" class="text-sm text-emeraldTrust">{{ session('ratingStatus') }}</p>
+            @endif
+            @error('rating')
+              <p id="skill-rating-error" role="alert" class="text-sm text-red-700">{{ $message }}</p>
+            @enderror
+          </div>
+        </form>
         @if ($showEditorNote || filled($skill->use_cases))
           <section class="bg-white border border-borderline rounded-2xl p-6 sm:p-7 space-y-4">
             @if ($showEditorNote)
