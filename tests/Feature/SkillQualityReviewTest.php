@@ -31,7 +31,7 @@ class SkillQualityReviewTest extends TestCase
     {
         Skill::factory()->create(['created_at' => now()->subDays(3)]);
         $old = Skill::factory()->published()->create([
-            'source_markdown' => "## Setup\nInstall Example CLI.\n",
+            'source_markdown' => "## Setup\nInstall Example CLI.\n\nExample request.\n",
             'created_at' => now()->subDays(2),
             'verified_at' => today(),
             'editor_note' => 'Previous editorial note.',
@@ -50,11 +50,12 @@ class SkillQualityReviewTest extends TestCase
 
         $this->patchJson($path, ['lease_token' => $lease, 'changes' => ['setup_tip' => 'Run invented.py']])
             ->assertUnprocessable()->assertJsonValidationErrors('changes.setup_tip');
-        $this->patchJson($path, ['lease_token' => $lease, 'changes' => ['sample_input' => null]])
+        $this->patchJson($path, ['lease_token' => $lease, 'changes' => ['sample_output' => 'Example request.']])
             ->assertUnprocessable()->assertJsonValidationErrors('changes.sample_input');
         $this->patchJson($path, ['lease_token' => $lease, 'changes' => [
             'editor_note' => 'The setup requires Example CLI.',
             'setup_tip' => 'Install Example CLI.',
+            'sample_input' => 'Example request.',
         ]])->assertOk()->assertJsonPath('data.ai_reviewed', true)->assertJsonPath('data.is_published', false);
 
         $old->refresh();
@@ -62,11 +63,14 @@ class SkillQualityReviewTest extends TestCase
         $this->assertFalse($old->is_published);
         $this->assertNull($old->verified_at);
         $this->assertNotNull($old->ai_reviewed_at);
+        $this->assertSame('Example request.', $old->sample_input);
+        $this->assertNull($old->sample_output);
         $this->assertSame(true, $old->ai_review_details['was_published']);
         $this->assertSame($old->source_url, $old->ai_review_details['source_url']);
         $this->assertSame([
             ['field' => 'editor_note', 'before' => 'Previous editorial note.', 'after' => 'The setup requires Example CLI.'],
             ['field' => 'setup_tip', 'before' => null, 'after' => 'Install Example CLI.'],
+            ['field' => 'sample_input', 'before' => null, 'after' => 'Example request.'],
         ], $old->ai_review_details['changes']);
         $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data', null);
         $this->withToken(self::TOKEN)->getJson('/api/v1/skills')->assertUnauthorized();

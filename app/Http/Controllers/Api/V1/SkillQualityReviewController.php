@@ -74,7 +74,7 @@ class SkillQualityReviewController extends Controller
             'changes.seo_keywords.*' => ['required', 'string', 'max:100', 'distinct:ignore_case'],
             'changes.setup_tip' => ['nullable', 'string', 'max:4000'],
             'changes.sample_input' => ['required_with:changes.sample_output', 'nullable', 'string', 'max:30000'],
-            'changes.sample_output' => ['required_with:changes.sample_input', 'nullable', 'string', 'max:30000'],
+            'changes.sample_output' => ['nullable', 'string', 'max:30000'],
         ]);
 
         $revision = $data['source_revision'] ?? null;
@@ -99,8 +99,9 @@ class SkillQualityReviewController extends Controller
                     throw ValidationException::withMessages(["changes.{$field}" => 'Use a verbatim excerpt from SKILL.md.']);
                 }
             }
-            if (array_key_exists('sample_input', $changes) !== array_key_exists('sample_output', $changes)) {
-                throw ValidationException::withMessages(['changes.sample_input' => 'Submit or clear both example fields together.']);
+            if (array_key_exists('sample_input', $changes) && $changes['sample_input'] !== $record->sample_input
+                && ! array_key_exists('sample_output', $changes) && filled($record->sample_output)) {
+                throw ValidationException::withMessages(['changes.sample_output' => 'Clear or replace the existing output when changing its input.']);
             }
 
             $diff = [];
