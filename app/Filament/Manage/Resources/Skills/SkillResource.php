@@ -19,9 +19,12 @@ use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -30,6 +33,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
@@ -109,6 +113,46 @@ class SkillResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('aiReviewDetails')
+                    ->label('AI review details')
+                    ->icon(Heroicon::OutlinedClipboardDocumentList)
+                    ->authorize('viewAny')
+                    ->visible(fn (Skill $record): bool => $record->ai_reviewed_at !== null)
+                    ->modalHeading('AI review details')
+                    ->modalWidth(Width::FiveExtraLarge)
+                    ->modalSubmitAction(false)
+                    ->schema([
+                        TextEntry::make('ai_reviewed_at')->label('Reviewed on')->dateTime(),
+                        TextEntry::make('previous_publication_status')->label('Before review')
+                            ->state(fn (Skill $record): ?string => isset($record->ai_review_details['was_published'])
+                                ? ($record->ai_review_details['was_published'] ? 'Published' : 'Draft') : null)
+                            ->placeholder('Unavailable'),
+                        TextEntry::make('review_source_url')->label('Source used')
+                            ->state(fn (Skill $record): ?string => $record->ai_review_details['source_url'] ?? null)
+                            ->url(fn (?string $state): ?string => Str::isUrl($state ?? '', ['https', 'http']) ? $state : null)
+                            ->extraAttributes(['class' => 'break-all'])->columnSpanFull()->placeholder('Unavailable'),
+                        TextEntry::make('review_source_commit')->label('Source commit')
+                            ->state(fn (Skill $record): ?string => $record->ai_review_details['source_commit'] ?? null)
+                            ->placeholder('Unavailable'),
+                        TextEntry::make('review_change_status')
+                            ->hiddenLabel()
+                            ->state(fn (Skill $record): string => $record->ai_review_details === null
+                                ? 'This review was recorded before change details were available.'
+                                : 'The review recorded no editorial changes.')
+                            ->visible(fn (Skill $record): bool => empty($record->ai_review_details['changes']))
+                            ->columnSpanFull(),
+                        RepeatableEntry::make('review_changes')->label('Changes')
+                            ->state(fn (Skill $record): array => $record->ai_review_details['changes'] ?? [])
+                            ->visible(fn (Skill $record): bool => filled($record->ai_review_details['changes'] ?? []))
+                            ->schema([
+                                TextEntry::make('field')->hiddenLabel()->weight('bold')->columnSpanFull()
+                                    ->formatStateUsing(fn (string $state): string => Str::headline($state)),
+                                TextEntry::make('before')->label('Before')->listWithLineBreaks()->placeholder('Empty')
+                                    ->extraAttributes(['class' => 'whitespace-pre-wrap break-all']),
+                                TextEntry::make('after')->label('After')->listWithLineBreaks()->placeholder('Empty')
+                                    ->extraAttributes(['class' => 'whitespace-pre-wrap break-all']),
+                            ])->columns(['default' => 1, 'md' => 2])->columnSpanFull(),
+                    ]),
                 Action::make('approveAndPublish')
                     ->label('Approve and publish')
                     ->icon(Heroicon::OutlinedCheckCircle)

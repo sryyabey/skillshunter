@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Manage\Resources\Skills\Pages\ManageSkills;
 use App\Models\Skill;
+use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class SkillQualityReviewTest extends TestCase
@@ -27,6 +33,8 @@ class SkillQualityReviewTest extends TestCase
             'source_markdown' => "## Setup\nInstall Example CLI.\n",
             'created_at' => now()->subDays(2),
             'verified_at' => today(),
+            'editor_note' => 'Previous editorial note.',
+            'source_url' => 'https://github.com/example/skills/blob/main/SKILL.md',
         ]);
         $new = Skill::factory()->create(['source_markdown' => 'New instructions.']);
 
@@ -53,8 +61,30 @@ class SkillQualityReviewTest extends TestCase
         $this->assertFalse($old->is_published);
         $this->assertNull($old->verified_at);
         $this->assertNotNull($old->ai_reviewed_at);
+        $this->assertSame(true, $old->ai_review_details['was_published']);
+        $this->assertSame($old->source_url, $old->ai_review_details['source_url']);
+        $this->assertSame([
+            ['field' => 'editor_note', 'before' => 'Previous editorial note.', 'after' => 'The setup requires Example CLI.'],
+            ['field' => 'setup_tip', 'before' => null, 'after' => 'Install Example CLI.'],
+        ], $old->ai_review_details['changes']);
         $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data', null);
         $this->withToken(self::TOKEN)->getJson('/api/v1/skills')->assertUnauthorized();
+
+        $editor = User::factory()->create();
+        $editor->assignRole(Role::create(['name' => 'panel_user']));
+        $editor->givePermissionTo(Permission::create(['name' => 'ViewAny:Skill']));
+        $this->actingAs($editor);
+        Filament::setCurrentPanel(Filament::getPanel('manage'));
+
+        $page = Livewire::test(ManageSkills::class)
+            ->assertTableActionHidden('aiReviewDetails', $new)
+            ->assertTableActionVisible('aiReviewDetails', $old)
+            ->mountTableAction('aiReviewDetails', $old);
+
+        $modal = json_encode($page->effects, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        $this->assertStringContainsString('Previous editorial note.', $modal);
+        $this->assertStringContainsString('The setup requires Example CLI.', $modal);
+        $this->assertStringContainsString($old->source_url, $modal);
     }
 
     public function test_quality_review_cannot_overwrite_a_concurrent_editor_change(): void

@@ -90,11 +90,28 @@ class SkillQualityReviewController extends Controller
                 throw ValidationException::withMessages(['changes.sample_input' => 'Submit or clear both example fields together.']);
             }
 
+            $before = $record->only(self::EDITORIAL_FIELDS);
             $record->fill(Arr::only($changes, self::EDITORIAL_FIELDS));
+            $diff = [];
+            foreach (self::EDITORIAL_FIELDS as $field) {
+                if ($record->isDirty($field)) {
+                    $diff[] = ['field' => $field, 'before' => $before[$field], 'after' => $record->{$field}];
+                }
+            }
             if (isset($changes['category_slug'])) {
-                $record->category_id = Category::where('slug', $changes['category_slug'])->firstOrFail()->id;
+                $category = Category::where('slug', $changes['category_slug'])->firstOrFail();
+                if ($record->category_id !== $category->id) {
+                    $diff[] = ['field' => 'category', 'before' => $record->category->name, 'after' => $category->name];
+                    $record->category_id = $category->id;
+                }
             }
             $record->forceFill([
+                'ai_review_details' => [
+                    'source_url' => $record->source_url,
+                    'source_commit' => $record->source_commit,
+                    'was_published' => $record->is_published,
+                    'changes' => $diff,
+                ],
                 'is_published' => false,
                 'verified_at' => null,
                 'approved_by' => null,
