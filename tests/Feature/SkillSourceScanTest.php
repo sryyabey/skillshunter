@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Manage\Resources\SkillSourceFiles\Pages\ManageSkillSourceFiles;
 use App\Models\Category;
 use App\Models\Skill;
+use App\Models\SkillSourceFile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -76,6 +79,21 @@ class SkillSourceScanTest extends TestCase
 
         $this->get($repositories)->assertOk()->assertSee('example/skills')->assertSee('Active files');
         $this->get($files)->assertOk()->assertSee('demo/SKILL.md')->assertSee('Unlinked')->assertSee('No job');
+
+        $unqueued = SkillSourceFile::where('path', 'demo/SKILL.md')->sole();
+        $queuedId = DB::table('skill_source_files')->insertGetId([
+            'skill_source_repository_id' => $repository, 'path' => 'queued/SKILL.md', 'path_hash' => hash('sha256', 'queued/SKILL.md'),
+            'commit_sha' => $commit, 'blob_sha' => str_repeat('c', 40),
+        ]);
+        $queued = SkillSourceFile::findOrFail($queuedId);
+        $category = Category::factory()->create();
+        DB::table('skill_discovery_jobs')->insert([
+            'topic' => 'Queued source', 'category_id' => $category->id, 'source_file_id' => $queuedId,
+        ]);
+
+        Livewire::test(ManageSkillSourceFiles::class)
+            ->filterTable('draft_job', 'queued')->assertCanSeeTableRecords([$queued])->assertCanNotSeeTableRecords([$unqueued])
+            ->filterTable('draft_job', 'none')->assertCanSeeTableRecords([$unqueued])->assertCanNotSeeTableRecords([$queued]);
     }
 
     public function test_preview_and_repeated_import_reconcile_existing_catalog_records(): void

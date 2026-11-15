@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use UnitEnum;
 
@@ -50,6 +51,19 @@ class SkillSourceFileResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('repository')->relationship('repository', 'full_name')->searchable(),
+                SelectFilter::make('draft_job')->label('Draft job')
+                    ->options([
+                        'none' => 'No job',
+                        'queued' => 'Queued',
+                        'running' => 'Running',
+                        'completed' => 'Completed',
+                        'failed' => 'Failed',
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? null) {
+                        'none' => $query->whereDoesntHave('discoveryJob'),
+                        'queued', 'running', 'completed', 'failed' => $query->whereRelation('discoveryJob', 'status', $data['value']),
+                        default => $query,
+                    }),
                 TernaryFilter::make('skill_id')->label('Catalog match')->nullable()
                     ->trueLabel('Linked')->falseLabel('Unlinked'),
                 TernaryFilter::make('removed_at')->label('Source status')->nullable()
