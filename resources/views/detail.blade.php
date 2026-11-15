@@ -24,6 +24,27 @@
   <meta property="og:url" content="{{ $canonicalUrl }}">
 @endpush
 
+@push('meta')
+  @if (filled($formattedSource))
+    <style>
+      .skill-markdown > * + * { margin-block-start: 1rem; }
+      .skill-markdown :is(h3, h4, h5, h6) { font-family: Newsreader, Georgia, serif; font-size: 1.25rem; font-weight: 600; line-height: 1.25; }
+      .skill-markdown :is(ul, ol) { padding-inline-start: 1.5rem; }
+      .skill-markdown ul { list-style: disc; }
+      .skill-markdown ol { list-style: decimal; }
+      .skill-markdown li + li { margin-block-start: .25rem; }
+      .skill-markdown li > :is(ul, ol) { margin-block: .25rem; }
+      .skill-markdown a { color: #0F5C4C; text-decoration: underline; }
+      .skill-markdown pre { background: #F3F1EC; border-radius: .5rem; padding: .75rem; white-space: pre-wrap; }
+      .skill-markdown :not(pre) > code { background: #F3F1EC; border-radius: .25rem; padding-inline: .25rem; }
+      .skill-markdown blockquote { border-inline-start: .1875rem solid #E5E2DC; padding-inline-start: .75rem; }
+      .skill-markdown table { border-collapse: collapse; table-layout: fixed; width: 100%; }
+      .skill-markdown :is(th, td) { border: 1px solid #E5E2DC; padding: .5rem; text-align: start; vertical-align: top; }
+      .skill-markdown th { background: #F3F1EC; }
+    </style>
+  @endif
+@endpush
+
 @section('status-message')
 {{ $skill->verified_at ? 'Approved catalog listing' : 'AI skill directory' }}
 @endsection
@@ -123,6 +144,16 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
             @endif
           </section>
         @endif
+        @if ($sampleInput !== null)
+          <section aria-labelledby="sample-prompt-heading" class="bg-white border border-borderline rounded-2xl p-6 space-y-4">
+            <h2 id="sample-prompt-heading" class="font-serif text-xl text-ink">Try this prompt</h2>
+            <pre class="whitespace-pre-wrap break-words rounded-xl bg-[#F3F1EC] p-4 text-sm"><code>{{ $sampleInput }}</code></pre>
+            @if ($sampleOutput !== null)
+              <h3 class="font-semibold text-sm">Example output from the source</h3>
+              <pre class="whitespace-pre-wrap break-words rounded-xl bg-[#F3F1EC] p-4 text-sm"><code>{{ $sampleOutput }}</code></pre>
+            @endif
+          </section>
+        @endif
         <section id="system-instructions" class="space-y-3">
           <h2 class="font-serif text-2xl font-medium text-ink">{{ $hasSource ? 'SKILL.md' : 'System Instructions' }}</h2>
           @if ($hasSource && $sourceUrl)
@@ -144,7 +175,17 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
               </button>
               <span id="copyStatus" role="status" class="text-xs text-muted"></span>
             </div>
+            @if (filled($formattedSource))
+              <div class="skill-markdown bg-white border border-borderline rounded-2xl p-5 sm:p-7 text-sm leading-relaxed [overflow-wrap:anywhere]">
+                {!! $formattedSource !!}
+              </div>
+              <details class="rounded-xl border border-borderline bg-white">
+                <summary class="cursor-pointer px-4 py-3 text-sm font-medium">View original Markdown</summary>
+                <pre class="bg-[#181817] text-[#EAE7DF] rounded-b-xl p-5 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"><code id="skillPromptText">{{ $instructions }}</code></pre>
+              </details>
+            @else
             <pre class="bg-[#181817] text-[#EAE7DF] rounded-2xl p-5 sm:p-6 font-mono text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap break-words"><code id="skillPromptText">{{ $instructions }}</code></pre>
+            @endif
           @endif
         </section>
         <section id="reviews" class="space-y-6 pt-2">

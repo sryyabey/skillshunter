@@ -58,6 +58,31 @@ class SkillCatalogTest extends TestCase
             ->assertViewHas('skills', fn ($skills): bool => $skills->total() === 0);
     }
 
+    public function test_detail_displays_source_backed_input_and_renders_long_markdown_safely(): void
+    {
+        $source = "---\nname: demo\nquickPrompts: Plan a short presentation\n---\n\n"
+            ."# Workflow\n\n| Stage | Result |\n| --- | --- |\n| Plan | Outline |\n\n"
+            ."<script>alert(1)</script>\n\n![Example](https://example.com/tracking.gif)\n\n"
+            ."[Unsafe](javascript:alert%281%29)\n\n".str_repeat("Documented workflow.\n", 150);
+        $skill = Skill::factory()->published()->create([
+            'source_url' => 'https://github.com/example/demo/blob/main/SKILL.md',
+            'source_markdown' => $source,
+            'sample_input' => 'Plan a short presentation',
+            'sample_output' => 'Invented example.',
+        ]);
+
+        $this->get(route('detail', $skill->slug))->assertOk()
+            ->assertSeeInOrder(['Try this prompt', 'Plan a short presentation', 'View original Markdown'])
+            ->assertSee('<h3>Workflow</h3>', false)->assertSee('<table>', false)
+            ->assertDontSee('Example output from the source')->assertDontSee('Invented example.')
+            ->assertDontSee('<script>alert(1)</script>', false)
+            ->assertDontSee('src="https://example.com/tracking.gif"', false)
+            ->assertDontSee('href="javascript:', false);
+
+        $response = $this->get(route('skills.download', $skill->slug))->assertOk();
+        $this->assertSame($source, $response->streamedContent());
+    }
+
     public function test_source_import_replaces_public_generated_instructions_and_downloads_exact_markdown(): void
     {
         $source = 'https://github.com/example/project/blob/main/skills/demo/SKILL.md';

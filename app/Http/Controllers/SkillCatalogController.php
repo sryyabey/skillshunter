@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -74,16 +75,44 @@ class SkillCatalogController extends Controller
         $skill = Skill::published()->where('slug', $slug)->with('category')
             ->withCount(['approvedReviews', 'votes'])->firstOrFail();
         $verdict = $request->string('verdict')->toString();
+        $source = filled($skill->source_url) ? ($skill->source_markdown ?? '') : '';
+        $normalizedSource = str_replace("\r\n", "\n", $source);
+        $sampleInput = $this->sourceExcerpt($normalizedSource, $skill->sample_input);
+        $sampleOutput = $sampleInput !== null ? $this->sourceExcerpt($normalizedSource, $skill->sample_output) : null;
+        $formattedSource = null;
+        if (filled($skill->source_url) && mb_strlen($source) >= 3000) {
+            $body = preg_replace('/\A(?:\x{FEFF})?---[ \t]*\R.*?\R---[ \t]*(?:\R|\z)/su', '', $source);
+            $html = Str::markdown($body, [
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+                'max_nesting_level' => 30,
+                'max_delimiters_per_line' => 1000,
+            ]);
+            // Prevent repository content from loading remote images inside the catalog.
+            $html = preg_replace('/<img\b[^>]*>/i', '', $html);
+            $formattedSource = preg_replace_callback('/<(\/?h)([1-6])>/i',
+                fn (array $heading): string => '<'.$heading[1].min(6, (int) $heading[2] + 2).'>', $html);
+        }
 
         return view('detail', [
             'skill' => $skill,
             'verdict' => $verdict,
+            'sampleInput' => $sampleInput,
+            'sampleOutput' => $sampleOutput,
+            'formattedSource' => $formattedSource,
             'reviews' => $skill->approvedReviews()->withCount('votes')
                 ->when(in_array($verdict, Review::VERDICTS, true), fn (Builder $query) => $query->where('verdict', $verdict))
                 ->latest()->orderByDesc('id')->paginate(12)->withQueryString()->fragment('reviews'),
             'related' => Skill::published()->where('category_id', $skill->category_id)
                 ->whereKeyNot($skill->id)->withCount('approvedReviews')->latest()->limit(4)->get(),
         ]);
+    }
+
+    private function sourceExcerpt(string $source, ?string $excerpt): ?string
+    {
+        $excerpt = trim(str_replace("\r\n", "\n", $excerpt ?? ''));
+
+        return $excerpt !== '' && str_contains($source, $excerpt) ? $excerpt : null;
     }
 
     public function download(string $slug): StreamedResponse
