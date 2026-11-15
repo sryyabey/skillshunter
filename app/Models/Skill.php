@@ -23,6 +23,8 @@ class Skill extends Model
         'seo_title', 'seo_description', 'seo_keywords',
     ];
 
+    protected $hidden = ['ai_review_lease_hash'];
+
     protected static function booted(): void
     {
         static::saving(function (Skill $skill): void {
@@ -32,11 +34,16 @@ class Skill extends Model
                 ]);
             }
 
+            $sourceChanged = $skill->exists && $skill->isDirty(['source_url', 'source_commit', 'source_markdown']);
+            if ($sourceChanged) {
+                $skill->ai_reviewed_at = null;
+                $skill->ai_review_lease_hash = null;
+                $skill->ai_review_lease_until = null;
+            }
+
             if (! $skill->source_commit && ! $skill->getOriginal('source_commit')) {
                 return;
             }
-
-            $sourceChanged = $skill->exists && $skill->isDirty(['source_url', 'source_commit', 'source_markdown']);
             if ($sourceChanged) {
                 $skill->verified_at = null;
                 $skill->approved_by = null;
@@ -68,6 +75,8 @@ class Skill extends Model
     {
         return [
             'verified_at' => 'date',
+            'ai_reviewed_at' => 'datetime',
+            'ai_review_lease_until' => 'datetime',
             'is_published' => 'boolean',
             'use_cases' => 'array',
             'limitations' => 'array',

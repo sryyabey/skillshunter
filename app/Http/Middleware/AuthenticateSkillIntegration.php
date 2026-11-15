@@ -8,9 +8,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateSkillIntegration
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $tokenKey = 'token'): Response
     {
-        $expectedToken = config('skill-integration.token');
+        $expectedToken = config('skill-integration.'.$tokenKey);
         $providedToken = $request->bearerToken();
 
         abort_unless(

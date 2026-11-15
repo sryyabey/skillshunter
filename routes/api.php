@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\DiscoveryJobController;
 use App\Http\Controllers\Api\V1\SkillController;
+use App\Http\Controllers\Api\V1\SkillQualityReviewController;
 use App\Http\Middleware\AuthenticateSkillIntegration;
 use Illuminate\Support\Facades\Route;
 
@@ -14,4 +15,11 @@ Route::prefix('v1')->name('api.v1.')
         Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
         Route::get('/skills/{slug}', [SkillController::class, 'show'])->name('skills.show');
         Route::put('/skills/{slug}', [SkillController::class, 'upsert'])->name('skills.upsert');
+    });
+
+Route::prefix('v1/skill-quality-reviews')->name('api.v1.skill-quality-reviews.')
+    ->middleware(['throttle:60,1,skill-quality-review', AuthenticateSkillIntegration::class.':quality_token'])
+    ->group(function (): void {
+        Route::post('/claim', [SkillQualityReviewController::class, 'claim'])->name('claim');
+        Route::patch('/{skill}', [SkillQualityReviewController::class, 'complete'])->whereNumber('skill')->name('complete');
     });

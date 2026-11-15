@@ -59,6 +59,7 @@ class SkillResource extends Resource
                 Textarea::make('source_markdown')->label('Original SKILL.md')->rows(12)->maxLength(100000)->columnSpanFull(),
                 TextInput::make('source_url')->url()->maxLength(2048)->columnSpanFull(),
                 TextInput::make('source_commit')->label('GitHub source commit')->maxLength(40)->regex('/\A[0-9a-f]{40}\z/')->required(fn (?Skill $record): bool => filled($record?->source_commit)),
+                DatePicker::make('ai_reviewed_at')->label('AI reviewed on')->disabled(),
                 TextInput::make('approved_by')->label('Approving editor ID')->disabled(),
                 TextInput::make('license')->maxLength(255),
                 TextInput::make('version')->maxLength(32),
@@ -83,6 +84,9 @@ class SkillResource extends Resource
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('category.name')->sortable(),
                 IconColumn::make('is_published')->boolean(),
+                IconColumn::make('ai_reviewed')->label('AI reviewed')->boolean()
+                    ->state(fn (Skill $record): bool => $record->ai_reviewed_at !== null),
+                TextColumn::make('ai_reviewed_at')->label('AI reviewed on')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('verified_at')->label('Listing approved on')->date()->sortable(),
                 TextColumn::make('reviews_count')->counts('reviews')->label('Reviews'),
             ])
@@ -95,6 +99,8 @@ class SkillResource extends Resource
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload(),
+                TernaryFilter::make('ai_reviewed_at')->label('AI review')->nullable()
+                    ->trueLabel('Reviewed')->falseLabel('Pending review'),
                 TernaryFilter::make('verified_at')
                     ->label('Listing approval')
                     ->nullable()
