@@ -195,6 +195,64 @@ class SkillCatalogTest extends TestCase
         $this->assertNull($other->verified_at);
     }
 
+    public function test_bulk_publish_keeps_eligible_drafts_published_when_other_drafts_fail_checks(): void
+    {
+        $editor = User::factory()->create();
+        $editor->assignRole(Role::create(['name' => 'panel_user']));
+        foreach (['ViewAny:Skill', 'Update:Skill'] as $name) {
+            $editor->givePermissionTo(Permission::create(['name' => $name]));
+        }
+        $this->actingAs($editor);
+        Filament::setCurrentPanel(Filament::getPanel('manage'));
+
+        $commit = str_repeat('a', 40);
+        $source = [
+            'source_commit' => $commit,
+            'source_url' => "https://github.com/example/repo/blob/{$commit}/SKILL.md",
+            'source_markdown' => "# Example\nActual instructions.",
+        ];
+        $first = Skill::factory()->create($source + ['verified_at' => today()]);
+        $placeholder = Skill::factory()->create(['source_markdown' => '# Insert instructions below'] + $source + ['verified_at' => today()]);
+        $unapproved = Skill::factory()->create($source);
+        $last = Skill::factory()->create($source + ['verified_at' => today()]);
+
+        Livewire::test(ManageSkills::class)
+            ->callTableBulkAction('setPublicationStatus', [$first, $placeholder, $unapproved, $last], ['is_published' => 'published'])
+            ->assertNotified('2 updated, 2 skipped');
+
+        $this->assertTrue($first->refresh()->is_published);
+        $this->assertTrue($last->refresh()->is_published);
+        $this->assertFalse($placeholder->refresh()->is_published);
+        $this->assertFalse($unapproved->refresh()->is_published);
+    }
+
+    public function test_editor_can_approve_and_publish_a_pinned_draft_with_an_existing_approval_date(): void
+    {
+        $editor = User::factory()->create();
+        $editor->assignRole(Role::create(['name' => 'panel_user']));
+        foreach (['ViewAny:Skill', 'Update:Skill'] as $name) {
+            $editor->givePermissionTo(Permission::create(['name' => $name]));
+        }
+        $commit = str_repeat('a', 40);
+        $skill = Skill::factory()->create([
+            'source_commit' => $commit,
+            'source_url' => "https://github.com/example/repo/blob/{$commit}/SKILL.md",
+            'source_markdown' => "# Example\nActual instructions.",
+            'verified_at' => today(),
+        ]);
+        $this->assertNull($skill->approved_by);
+
+        $this->actingAs($editor);
+        Filament::setCurrentPanel(Filament::getPanel('manage'));
+        Livewire::test(ManageSkills::class)
+            ->callTableAction('approveAndPublish', $skill)
+            ->assertNotified('Skill published');
+
+        $this->assertTrue($skill->refresh()->is_published);
+        $this->assertSame($editor->id, $skill->approved_by);
+        $this->get(route('detail', $skill->slug))->assertOk();
+    }
+
     public function test_sitemap_lists_the_canonical_home_and_only_published_skills(): void
     {
         config(['app.url' => 'https://skillshunter.net']);

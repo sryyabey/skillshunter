@@ -5,11 +5,13 @@ namespace App\Filament\Manage\Resources\Skills;
 use App\Filament\Manage\Resources\Skills\Pages\ManageSkills;
 use App\Models\Skill;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -17,6 +19,7 @@ use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -27,6 +30,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
 class SkillResource extends Resource
@@ -99,6 +103,26 @@ class SkillResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('approveAndPublish')
+                    ->label('Approve and publish')
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->authorize('update')
+                    ->visible(fn (Skill $record): bool => ! $record->is_published && filled($record->source_commit))
+                    ->requiresConfirmation()
+                    ->action(function (Skill $record, Action $action): void {
+                        try {
+                            $record->forceFill([
+                                'verified_at' => today(),
+                                'approved_by' => Filament::auth()->id(),
+                                'is_published' => true,
+                            ])->save();
+                        } catch (ValidationException $exception) {
+                            Notification::make()->danger()->title('Skill could not be published')
+                                ->body($exception->validator->errors()->first())->send();
+                            $action->halt();
+                        }
+                    })
+                    ->successNotificationTitle('Skill published'),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -113,14 +137,23 @@ class SkillResource extends Resource
                                 ->in(['published', 'draft'])
                                 ->required(),
                         ])
-                        ->action(function (Collection $records, array $data): void {
-                            DB::transaction(function () use ($records, $data): void {
-                                foreach ($records as $skill) {
-                                    $skill->update(['is_published' => $data['is_published'] === 'published']);
+                        ->action(function (Collection $records, array $data, BulkAction $action): void {
+                            foreach ($records as $skill) {
+                                try {
+                                    $saved = $skill->update(['is_published' => $data['is_published'] === 'published']);
+                                    if (! $saved) {
+                                        $action->reportBulkProcessingFailure();
+                                    }
+                                } catch (ValidationException $exception) {
+                                    $reason = $exception->validator->errors()->first();
+                                    $action->reportBulkProcessingFailure($reason, fn (int $count): string => "{$count} skipped. {$reason}");
                                 }
-                            });
+                            }
                         })
                         ->successNotificationTitle('Publication status updated')
+                        ->failureNotificationTitle(fn (int $successCount, int $failureCount): string => "{$successCount} updated, {$failureCount} skipped")
+                        ->missingBulkAuthorizationFailureNotificationMessage(fn (int $failureCount): string => "{$failureCount} skipped due to permissions.")
+                        ->missingBulkProcessingFailureNotificationMessage(fn (int $failureCount): string => "{$failureCount} could not be saved.")
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('setVerificationDate')
                         ->label('Set listing approval date')
@@ -134,7 +167,11 @@ class SkillResource extends Resource
                         ->action(function (Collection $records, array $data): void {
                             DB::transaction(function () use ($records, $data): void {
                                 foreach ($records as $skill) {
-                                    $skill->update(['verified_at' => $data['verified_at']]);
+                                    $skill->verified_at = $data['verified_at'];
+                                    if ($skill->source_commit && ! $skill->approved_by) {
+                                        $skill->approved_by = Filament::auth()->id();
+                                    }
+                                    $skill->save();
                                 }
                             });
                         })
