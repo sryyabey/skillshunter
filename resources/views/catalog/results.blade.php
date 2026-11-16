@@ -87,16 +87,18 @@
         @if ($category !== '')
           <a data-catalog-link href="{{ $allCategoriesUrl }}" class="inline-flex min-h-12 items-center text-sm font-medium text-emeraldTrust underline">Search all categories</a>
         @endif
-        @if ($relatedSkills->isNotEmpty())
-          <h3 class="font-serif text-xl font-medium text-ink">Related skills</h3>
-          <ul class="divide-y divide-borderline">
-            @foreach ($relatedSkills as $relatedSkill)
-            <li><a href="{{ route('detail', $relatedSkill->slug) }}" class="inline-flex min-h-12 items-center text-sm font-medium text-emeraldTrust hover:underline">{{ $relatedSkill->title }}</a></li>
-            @endforeach
-          </ul>
-        @endif
       @endif
     </div>
+    @if ($relatedSkills->isNotEmpty() || $suggestedSkills->isNotEmpty())
+      <div class="space-y-2 rounded-2xl border border-borderline bg-white p-6">
+        <h3 class="font-serif text-xl font-medium text-ink">{{ $relatedSkills->isNotEmpty() ? 'Related skills' : 'Explore the catalog' }}</h3>
+        <ul class="divide-y divide-borderline">
+          @foreach ($relatedSkills->isNotEmpty() ? $relatedSkills : $suggestedSkills as $suggestion)
+          <li><a href="{{ route('detail', $suggestion->slug) }}" class="inline-flex min-h-12 items-center text-sm font-medium text-emeraldTrust hover:underline">{{ $suggestion->title }}</a></li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
   @endforelse
   <div data-catalog-pagination>{{ $skills->links() }}</div>
 </div>

@@ -122,6 +122,19 @@ class SkillCatalogTest extends TestCase
             ->assertDontSee('Create a presentation');
     }
 
+    public function test_search_without_partial_matches_displays_catalog_skills_under_the_empty_message(): void
+    {
+        $published = Skill::factory()->published()->create(['title' => 'Workbook Workflow']);
+        $draft = Skill::factory()->create(['title' => 'Private Skill']);
+
+        $this->get(route('welcome', ['q' => 'unmatchablequery', '_catalog_results' => 1]))
+            ->assertOk()
+            ->assertSee('0 SKILLS FOUND')
+            ->assertSeeInOrder(['No skills found.', 'Try a shorter search or a different term.', 'Explore the catalog', $published->title])
+            ->assertSee(route('detail', $published->slug))
+            ->assertDontSee($draft->title);
+    }
+
     public function test_catalog_search_can_return_only_the_results_with_clean_pagination_links(): void
     {
         Skill::factory()->published()->count(13)->sequence(

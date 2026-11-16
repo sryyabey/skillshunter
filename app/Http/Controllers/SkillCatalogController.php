@@ -43,9 +43,14 @@ class SkillCatalogController extends Controller
                 ->orderByDesc('verified_at')->orderByDesc('id')->limit(5)->get(['title', 'slug'])
             : collect();
 
+        $suggestedSkills = $skills->total() === 0 && $relatedSkills->isEmpty()
+            ? Skill::published()->orderByDesc('verified_at')->orderByDesc('id')->limit(5)->get(['title', 'slug'])
+            : collect();
+
         $results = [
             'skills' => $skills,
             'relatedSkills' => $relatedSkills,
+            'suggestedSkills' => $suggestedSkills,
             'categories' => Category::orderBy('name')->get(),
             'search' => $search,
             'category' => $category,
