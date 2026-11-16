@@ -9,6 +9,7 @@
     <section class="space-y-2">
       <h2 class="font-serif text-2xl text-ink">Catalog entries and licenses</h2>
       <p>SkillsHunter lists AI skills from third-party sources. The original source and its license govern your use, modification, and redistribution of a skill. Check the original source for current instructions and license terms before using or sharing it.</p>
+      <p>SkillsHunter is an informational directory of third-party AI skills. A listing or catalog approval does not guarantee that a skill is safe, accurate, or compatible with your environment. You are responsible for reviewing a skill before use and deciding what permissions and access to grant it. Nothing in these terms limits rights or responsibilities that cannot be limited under applicable law.</p>
     </section>
 
     <section class="space-y-2">

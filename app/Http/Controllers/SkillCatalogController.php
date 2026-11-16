@@ -103,6 +103,14 @@ class SkillCatalogController extends Controller
         $formattedSource = null;
         if (filled($skill->source_url) && mb_strlen($source) >= 3000) {
             $body = preg_replace('/\A(?:\x{FEFF})?---[ \t]*\R.*?\R---[ \t]*(?:\R|\z)/su', '', $source);
+            if ($skill->slug === 'github-eosphoros-ai-db-gpt-skills-dashboard-builder-ea505300a247') {
+                $body = strtr($body, [
+                    '`[修改组件]`' => '`[修改组件]` (Edit component)',
+                    '`[指标解释]`' => '`[指标解释]` (Explain metric)',
+                    '`[异常分析]`' => '`[异常分析]` (Analyze anomaly)',
+                ]);
+            }
+
             $html = Str::markdown($body, [
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,

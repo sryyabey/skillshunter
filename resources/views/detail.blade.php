@@ -195,6 +195,10 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
               @endif
             </div>
           @endif
+          <p class="text-xs text-muted leading-relaxed">
+            SkillsHunter provides this listing for informational purposes only. Review the skill’s source, license, and required permissions before use. You are responsible for deciding whether to install or run it.
+            <a href="{{ route('terms') }}" class="text-emeraldTrust underline">Terms of Use</a>
+          </p>
           @if (filled($instructions))
             <div class="flex flex-wrap items-center gap-2">
               <a href="{{ route('skills.download', $skill->slug) }}" class="px-3 py-2 text-xs font-medium border border-borderline bg-white rounded-lg">↓ Download .md</a>
