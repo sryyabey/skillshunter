@@ -31,8 +31,6 @@
 @endsection
 
 @section('navigation')
-<a href="#skill-directory" class="text-ink hover:text-emeraldTrust transition-colors">Skill Directory</a>
-        <a href="#editorial-standards" class="hover:text-emeraldTrust transition-colors">How We List Skills</a>
         @if ($feed->isNotEmpty())
         <a href="#community-feed" class="hover:text-emeraldTrust transition-colors">Latest Reviews</a>
         @endif
