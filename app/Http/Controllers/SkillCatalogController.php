@@ -39,7 +39,6 @@ class SkillCatalogController extends Controller
         return view('welcome', [
             'skills' => $skills,
             'categories' => Category::orderBy('name')->get(),
-            'reviewSkills' => Skill::published()->orderBy('title')->get(['slug', 'title']),
             'feed' => Review::approved()->whereHas('skill', fn (Builder $query) => $query->published())
                 ->with('skill')->latest()->orderByDesc('id')->limit(5)->get(),
             'catalogStatusMessage' => $this->catalogStatusMessage(),

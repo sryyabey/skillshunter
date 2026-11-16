@@ -40,7 +40,6 @@
 
 @section('header-actions')
 <a href="#suggest-skill" class="text-sm font-medium text-ink hover:text-emeraldTrust px-3 py-1.5 transition-colors">+ Suggest a Skill</a>
-        <a href="{{ $reviewSkills->isNotEmpty() ? '#share-review' : '#suggest-skill' }}" class="bg-ink text-paper hover:bg-emeraldTrust text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm">Share Your Experience</a>
 @endsection
 
 @section('content')
@@ -165,7 +164,6 @@
             @endforeach
           </div>
 
-          <a href="{{ $reviewSkills->isNotEmpty() ? '#share-review' : '#suggest-skill' }}" class="block py-2.5 px-4 text-center border border-ink text-ink hover:bg-ink hover:text-paper text-xs font-semibold rounded-xl transition-colors">+ Share Your Experience</a>
         </div>
         @endif
         <div id="editorial-standards" class="bg-[#F3F1EC] border border-borderline rounded-2xl p-5">
@@ -190,12 +188,6 @@
     </div>
   </div>
   <section class="max-w-6xl mx-auto px-4 sm:px-6 pb-12 grid gap-6 md:grid-cols-2">
-    @if ($reviewSkills->isNotEmpty())
-      <div id="share-review" class="bg-white border border-borderline rounded-2xl p-6 scroll-mt-20">
-        <h2 id="catalog-review-heading" class="font-serif text-2xl mb-3">Share Your Experience</h2>
-        @include('catalog.review-form', ['reviewTarget' => null])
-      </div>
-    @endif
     <div id="suggest-skill" class="bg-white border border-borderline rounded-2xl p-6 scroll-mt-20">
       <h2 id="suggest-heading" class="font-serif text-2xl mb-3">Suggest a Skill</h2>
       <form method="POST" action="{{ route('suggestions.store') }}" aria-labelledby="suggest-heading" class="grid gap-3">
