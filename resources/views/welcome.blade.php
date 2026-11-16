@@ -8,6 +8,9 @@
     'category' => $category,
     'page' => $skills->currentPage() > 1 ? $skills->currentPage() : null,
   ], fn ($value) => filled($value)));
+  $directoryFragment = '#skill-directory';
+  $categoryName = $categories->firstWhere('slug', $category)?->name ?? $category;
+  $allCategoriesUrl = route('welcome', $search !== '' ? ['q' => $search] : []).$directoryFragment;
 @endphp
 
 @section('title', $pageTitle)
@@ -56,33 +59,60 @@
       <p class="text-base sm:text-lg text-muted leading-relaxed mb-8">
         Browse agent skills, compare use cases, and open the original source. Share your results after trying a skill.
       </p>
-      <form action="{{ route('welcome') }}" method="GET" aria-label="Filter skills" class="flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1">
-          <svg class="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input
-            id="searchInput" name="q" value="{{ $search }}" maxlength="100"
-            aria-label="Search skills"
-            type="text"
-            placeholder="Search skills, e.g. code review, SEO content, financial spreadsheets, or Claude Artifacts..."
-            class="w-full pl-10 pr-4 py-3 bg-white border border-borderline rounded-xl text-sm focus:outline-none focus:border-emeraldTrust transition-colors"
-          />
-        </div>
-        <select id="categoryFilter" name="category" aria-label="Filter by category" class="px-4 py-3 bg-white border border-borderline rounded-xl text-sm">
-          <option value="">All Categories</option>
-          @foreach ($categories as $option)
-            <option value="{{ $option->slug }}" @selected($option->slug === $category)>{{ $option->name }}</option>
+      <search>
+        <form action="{{ route('welcome').$directoryFragment }}" method="GET" aria-labelledby="searchLabel" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div class="min-w-0 flex-1">
+            <label id="searchLabel" for="searchInput" class="mb-1 block text-sm font-medium text-ink">Search skills</label>
+            <div class="relative">
+              <svg aria-hidden="true" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input id="searchInput" name="q" value="{{ $search }}" maxlength="100" type="search" enterkeyhint="search"
+                autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="What do you want to do?"
+                class="h-12 w-full rounded-xl border border-borderline bg-white pl-10 pr-4 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-emeraldTrust">
+            </div>
+          </div>
+          <div class="min-w-0 sm:max-w-[40%]">
+            <label for="categoryFilter" class="mb-1 block text-sm font-medium text-ink">Category</label>
+            <select id="categoryFilter" name="category" class="h-12 w-full rounded-xl border border-borderline bg-white px-4 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-emeraldTrust">
+              <option value="">All Categories</option>
+              @foreach ($categories as $option)
+                <option value="{{ $option->slug }}" @selected($option->slug === $category)>{{ $option->name }}</option>
+              @endforeach
+            </select>
+          </div>
+          <button type="submit" class="h-12 rounded-xl bg-ink px-5 text-base text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emeraldTrust">Search</button>
+        </form>
+        @if ($suggestedSearches !== [])
+        <ul aria-label="Suggested searches" class="mt-4 flex flex-wrap gap-2">
+          @foreach ($suggestedSearches as $term => $label)
+            <li><a href="{{ route('welcome', ['q' => $term]).$directoryFragment }}" class="inline-flex min-h-12 items-center rounded-full border border-borderline bg-white px-3 text-sm text-ink hover:border-emeraldTrust hover:text-emeraldTrust">{{ $label }}</a></li>
           @endforeach
-        </select>
-        <button class="px-4 py-3 bg-ink text-paper rounded-xl text-sm">Search</button>
-      </form>
+        </ul>
+        @endif
+      </search>
     </div>
   </section>
-  <div id="skill-directory" class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+  <div id="skill-directory" class="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 sm:px-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
       <div class="lg:col-span-8 space-y-6">
-        <div class="flex items-center justify-between border-b border-borderline pb-3">
-          <h2 class="font-serif text-2xl font-medium text-ink">Skill Directory</h2>
-          <span id="resultCount" class="text-xs font-mono text-muted">{{ $skills->total() }} SKILLS FOUND</span>
+        <div class="space-y-3 border-b border-borderline pb-3">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 class="min-w-0 break-words font-serif text-2xl font-medium text-ink">{{ $search !== '' ? 'Results for “'.$search.'”' : 'Skill Directory' }}</h2>
+            <span id="resultCount" class="text-xs font-mono text-muted">{{ $skills->total() }} {{ $skills->total() === 1 ? 'SKILL' : 'SKILLS' }} FOUND</span>
+          </div>
+          @if ($search !== '' || $category !== '')
+          <ul aria-label="Active filters" class="flex flex-wrap gap-2">
+            @if ($search !== '')
+            <li class="min-w-0"><a href="{{ route('welcome', $category !== '' ? ['category' => $category] : []).$directoryFragment }}" aria-label="Remove search query: {{ $search }}" class="inline-flex min-h-12 max-w-full items-center gap-2 rounded-full border border-borderline bg-white px-3 text-sm hover:border-emeraldTrust">
+              <span class="truncate">{{ $search }}</span><span aria-hidden="true">×</span>
+            </a></li>
+            @endif
+            @if ($category !== '')
+            <li class="min-w-0"><a href="{{ $allCategoriesUrl }}" aria-label="Remove category filter: {{ $categoryName }}" class="inline-flex min-h-12 max-w-full items-center gap-2 rounded-full border border-borderline bg-white px-3 text-sm hover:border-emeraldTrust">
+              <span class="truncate">{{ $categoryName }}</span><span aria-hidden="true">×</span>
+            </a></li>
+            @endif
+          </ul>
+          @endif
         </div>
 
         <div class="space-y-5">
@@ -136,7 +166,28 @@
           </div>
         </article>
           @empty
-            <p class="text-muted">No skills found.</p>
+            <div class="space-y-3 rounded-2xl border border-borderline bg-white p-6">
+              @if ($skills->total() > 0)
+                <p class="text-muted">There are no skills on this page.</p>
+                <a href="{{ $skills->url(1) }}" class="font-medium text-emeraldTrust underline">Go to the first page</a>
+              @else
+                <p class="font-medium text-ink">No skills found{{ $category !== '' ? ' in '.$categoryName : '' }}.</p>
+                @if ($search !== '')
+                  <p class="text-sm text-muted">Try a shorter search or a different term.</p>
+                @endif
+                @if ($category !== '')
+                  <a href="{{ $allCategoriesUrl }}" class="inline-flex min-h-12 items-center text-sm font-medium text-emeraldTrust underline">Search all categories</a>
+                @endif
+                @if ($relatedSkills->isNotEmpty())
+                  <h3 class="font-serif text-xl font-medium text-ink">Related skills</h3>
+                  <ul class="divide-y divide-borderline">
+                    @foreach ($relatedSkills as $relatedSkill)
+                    <li><a href="{{ route('detail', $relatedSkill->slug) }}" class="inline-flex min-h-12 items-center text-sm font-medium text-emeraldTrust hover:underline">{{ $relatedSkill->title }}</a></li>
+                    @endforeach
+                  </ul>
+                @endif
+              @endif
+            </div>
           @endforelse
           {{ $skills->links() }}
         </div>

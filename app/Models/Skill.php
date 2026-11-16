@@ -94,7 +94,7 @@ class Skill extends Model
     }
 
     #[Scope]
-    protected function catalogSearch(Builder $query, string $search): void
+    protected function catalogSearch(Builder $query, string $search, bool $allowPartial = false): void
     {
         preg_match_all('/[\p{L}\p{N}]+(?:[+#]+)?/u', mb_strtolower($search), $matches);
         $tokens = array_unique($matches[0]);
@@ -109,6 +109,8 @@ class Skill extends Model
         $searchable = ['title', 'seo_keywords', 'seo_title', 'slug', 'summary', 'editor_note', 'use_cases'];
         $rank = [];
         $bindings = [];
+        $termMatches = [];
+        $termBindings = [];
         $phrase = '%'.implode('%', array_map(self::escapeSearchTerm(...), $terms)).'%';
         $rank[] = "CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 30 ELSE 0 END";
         $bindings[] = $phrase;
@@ -117,19 +119,30 @@ class Skill extends Model
             $pattern = '%'.self::escapeSearchTerm($term).'%';
             $variants = array_map(fn (string $variant): string => '%'.self::escapeSearchTerm($variant).'%', self::searchVariants($term));
 
-            $query->where(function (Builder $match) use ($searchable, $variants): void {
-                foreach ($variants as $variant) {
-                    foreach ($searchable as $field) {
-                        $match->orWhereRaw("LOWER({$field}) LIKE ? ESCAPE '!'", [$variant]);
-                    }
-                    $match->orWhereHas('category', fn (Builder $category) => $category->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$variant]));
+            $matchesTerm = [];
+            $matchBindings = [];
+            foreach ($variants as $variant) {
+                foreach ($searchable as $field) {
+                    $matchesTerm[] = "LOWER(skills.{$field}) LIKE ? ESCAPE '!'";
+                    $matchBindings[] = $variant;
                 }
-            });
+                $matchesTerm[] = "EXISTS (SELECT 1 FROM categories WHERE categories.id = skills.category_id AND LOWER(categories.name) LIKE ? ESCAPE '!')";
+                $matchBindings[] = $variant;
+            }
+            $termMatches[] = '('.implode(' OR ', $matchesTerm).')';
+            array_push($termBindings, ...$matchBindings);
 
             foreach (['title' => 18, 'seo_keywords' => 12, 'seo_title' => 8, 'slug' => 5, 'summary' => 3, 'use_cases' => 2] as $field => $weight) {
                 $rank[] = "CASE WHEN LOWER({$field}) LIKE ? ESCAPE '!' THEN {$weight} ELSE 0 END";
                 $bindings[] = $pattern;
             }
+        }
+
+        $query->whereRaw('('.implode($allowPartial ? ' OR ' : ' AND ', $termMatches).')', $termBindings);
+
+        if ($allowPartial) {
+            $coverage = array_map(fn (string $match): string => "CASE WHEN {$match} THEN 1 ELSE 0 END", $termMatches);
+            $query->orderByRaw('('.implode(' + ', $coverage).') DESC', $termBindings);
         }
 
         $query->orderByRaw('('.implode(' + ', $rank).') DESC', $bindings);

@@ -30,7 +30,7 @@ class SkillCatalogTest extends TestCase
         $this->assertDatabaseCount('reviews', 4);
 
         $this->get(route('welcome', ['category' => 'data-research', 'q' => 'SQL']))
-            ->assertOk()->assertSee('1 SKILLS FOUND')->assertSee('SQL & Data Analysis Architect');
+            ->assertOk()->assertSee('1 SKILL FOUND')->assertSee('SQL & Data Analysis Architect');
 
         $draft = Skill::factory()->create();
         $this->get(route('detail', $draft->slug))->assertNotFound();
@@ -86,6 +86,39 @@ class SkillCatalogTest extends TestCase
 
         $this->get(route('welcome', ['q' => '%__']))->assertOk()
             ->assertViewHas('skills', fn ($skills): bool => $skills->total() === 0);
+    }
+
+    public function test_empty_search_suggests_published_partial_matches_in_the_active_category(): void
+    {
+        $best = Skill::factory()->published()->create([
+            'title' => 'Workbook Workflow', 'seo_keywords' => ['spreadsheet automation'],
+        ]);
+        $weaker = Skill::factory()->published()->for($best->category)->create(['title' => 'Excel Templates']);
+        Skill::factory()->for($best->category)->create(['title' => 'Excel Automation Dashboard']);
+        Skill::factory()->published()->create(['title' => 'Excel Automation Dashboard']);
+
+        $query = 'excel automation dashboard';
+        $category = $best->category->slug;
+        $this->get(route('welcome', ['q' => $query, 'category' => $category]))
+            ->assertOk()
+            ->assertSee('0 SKILLS FOUND')
+            ->assertSee('Search all categories')
+            ->assertSee(route('welcome', ['q' => $query]).'#skill-directory')
+            ->assertSee(route('welcome', ['category' => $category]).'#skill-directory')
+            ->assertSeeInOrder(['Related skills', $best->title, $weaker->title])
+            ->assertViewHas('relatedSkills', fn ($skills): bool => $skills->pluck('slug')->all() === [$best->slug, $weaker->slug]);
+    }
+
+    public function test_catalog_only_shows_suggested_searches_with_published_results(): void
+    {
+        Skill::factory()->published()->create(['title' => 'Architecture Code Review']);
+        Skill::factory()->create(['title' => 'Presentation Builder']);
+
+        $this->get(route('welcome'))
+            ->assertOk()
+            ->assertSee('Review code')
+            ->assertSee(route('welcome', ['q' => 'code review']).'#skill-directory')
+            ->assertDontSee('Create a presentation');
     }
 
     public function test_detail_displays_source_backed_input_and_renders_long_markdown_safely(): void

@@ -25,19 +25,35 @@ class SkillCatalogController extends Controller
         $search = trim($request->string('q')->limit(100, '')->toString());
         $category = $request->string('category')->toString();
 
-        $query = Skill::published()
+        $catalog = Skill::published()
+            ->when($category !== '', fn (Builder $query) => $query->whereRelation('category', 'slug', $category));
+        $query = (clone $catalog)
             ->with(['category', 'latestReview'])
             ->withCount(['approvedReviews', 'votes'])
-            ->when($category, fn (Builder $query) => $query->whereRelation('category', 'slug', $category))
             ->when($search !== '', fn (Builder $query) => $query->catalogSearch($search))
             ->orderByDesc('verified_at')->orderByDesc('id');
 
         $skills = $search === '' && $category === ''
             ? $this->browseCatalog($query)
-            : $query->paginate(12)->withQueryString();
+            : $query->paginate(12)->withQueryString()->fragment('skill-directory');
+
+        $relatedSkills = $search !== '' && $skills->total() === 0
+            ? (clone $catalog)->catalogSearch($search, allowPartial: true)
+                ->orderByDesc('verified_at')->orderByDesc('id')->limit(5)->get(['title', 'slug'])
+            : collect();
+
+        $suggestedSearches = $search === '' && $category === ''
+            ? array_filter([
+                'code review' => 'Review code',
+                'spreadsheet' => 'Build a spreadsheet',
+                'presentation' => 'Create a presentation',
+            ], fn (string $term): bool => Skill::published()->catalogSearch($term)->exists(), ARRAY_FILTER_USE_KEY)
+            : [];
 
         return view('welcome', [
             'skills' => $skills,
+            'relatedSkills' => $relatedSkills,
+            'suggestedSearches' => $suggestedSearches,
             'categories' => Category::orderBy('name')->get(),
             'feed' => Review::approved()->whereHas('skill', fn (Builder $query) => $query->published())
                 ->with('skill')->latest()->orderByDesc('id')->limit(5)->get(),
