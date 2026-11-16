@@ -103,8 +103,8 @@ class SkillCatalogTest extends TestCase
             ->assertOk()
             ->assertSee('0 SKILLS FOUND')
             ->assertSee('Search all categories')
-            ->assertSee(route('welcome', ['q' => $query]).'#skill-directory')
-            ->assertSee(route('welcome', ['category' => $category]).'#skill-directory')
+            ->assertSee(route('welcome', ['q' => $query]))
+            ->assertSee(route('welcome', ['category' => $category]))
             ->assertSeeInOrder(['Related skills', $best->title, $weaker->title])
             ->assertViewHas('relatedSkills', fn ($skills): bool => $skills->pluck('slug')->all() === [$best->slug, $weaker->slug]);
     }
@@ -116,9 +116,26 @@ class SkillCatalogTest extends TestCase
 
         $this->get(route('welcome'))
             ->assertOk()
+            ->assertSee('id="catalog-search" action="'.route('welcome').'"', false)
             ->assertSee('Review code')
-            ->assertSee(route('welcome', ['q' => 'code review']).'#skill-directory')
+            ->assertSee(route('welcome', ['q' => 'code review']))
             ->assertDontSee('Create a presentation');
+    }
+
+    public function test_catalog_search_can_return_only_the_results_with_clean_pagination_links(): void
+    {
+        Skill::factory()->published()->count(13)->sequence(
+            fn ($sequence): array => ['title' => 'Spreadsheet Template '.$sequence->index],
+        )->create();
+
+        $this->get(route('welcome', ['q' => 'spreadsheet', '_catalog_results' => 1]))
+            ->assertOk()
+            ->assertViewIs('catalog.results')
+            ->assertSee('13 SKILLS FOUND')
+            ->assertSee(route('welcome', ['q' => 'spreadsheet', 'page' => 2]))
+            ->assertDontSee('_catalog_results')
+            ->assertDontSee('#skill-directory')
+            ->assertDontSee('Suggest a Skill');
     }
 
     public function test_detail_displays_source_backed_input_and_renders_long_markdown_safely(): void

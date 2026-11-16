@@ -35,32 +35,36 @@ class SkillCatalogController extends Controller
 
         $skills = $search === '' && $category === ''
             ? $this->browseCatalog($query)
-            : $query->paginate(12)->withQueryString()->fragment('skill-directory');
+            : $query->paginate(12);
+        $skills->appends($request->except('_catalog_results', 'page'));
 
         $relatedSkills = $search !== '' && $skills->total() === 0
             ? (clone $catalog)->catalogSearch($search, allowPartial: true)
                 ->orderByDesc('verified_at')->orderByDesc('id')->limit(5)->get(['title', 'slug'])
             : collect();
 
-        $suggestedSearches = $search === '' && $category === ''
-            ? array_filter([
+        $results = [
+            'skills' => $skills,
+            'relatedSkills' => $relatedSkills,
+            'categories' => Category::orderBy('name')->get(),
+            'search' => $search,
+            'category' => $category,
+        ];
+
+        if ($request->boolean('_catalog_results')) {
+            return view('catalog.results', $results);
+        }
+
+        return view('welcome', $results + [
+            'suggestedSearches' => array_filter([
                 'code review' => 'Review code',
                 'spreadsheet' => 'Build a spreadsheet',
                 'presentation' => 'Create a presentation',
-            ], fn (string $term): bool => Skill::published()->catalogSearch($term)->exists(), ARRAY_FILTER_USE_KEY)
-            : [];
-
-        return view('welcome', [
-            'skills' => $skills,
-            'relatedSkills' => $relatedSkills,
-            'suggestedSearches' => $suggestedSearches,
-            'categories' => Category::orderBy('name')->get(),
+            ], fn (string $term): bool => Skill::published()->catalogSearch($term)->exists(), ARRAY_FILTER_USE_KEY),
             'feed' => Review::approved()->whereHas('skill', fn (Builder $query) => $query->published())
                 ->with('skill')->latest()->orderByDesc('id')->limit(5)->get(),
             'catalogStatusMessage' => $this->catalogStatusMessage(),
             'publishedCount' => Skill::published()->count(),
-            'search' => $search,
-            'category' => $category,
         ]);
     }
 
@@ -98,9 +102,9 @@ class SkillCatalogController extends Controller
         $ids = $ordered->forPage($page, 12)->values();
         $skills = $query->whereKey($ids->all())->get()->sortBy(fn (Skill $skill) => $ids->search($skill->id))->values();
 
-        return (new LengthAwarePaginator($skills, $ordered->count(), 12, $page, [
+        return new LengthAwarePaginator($skills, $ordered->count(), 12, $page, [
             'path' => Paginator::resolveCurrentPath(),
-        ]))->withQueryString();
+        ]);
     }
 
     public function show(Request $request, string $slug): View
