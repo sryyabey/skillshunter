@@ -1,11 +1,20 @@
 <?php
 
+use App\Http\Controllers\Api\Public\V1\SkillController as PublicSkillController;
 use App\Http\Controllers\Api\V1\DiscoveryJobController;
 use App\Http\Controllers\Api\V1\SkillController;
 use App\Http\Controllers\Api\V1\SkillQualityReviewController;
 use App\Http\Controllers\Api\V1\SkillWorkerStatusController;
 use App\Http\Middleware\AuthenticateSkillIntegration;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('public/v1')->name('api.public.v1.')
+    ->middleware('throttle:60,1,public-catalog')
+    ->group(function (): void {
+        Route::get('/skills', [PublicSkillController::class, 'index'])->name('skills.index');
+        Route::get('/skills/{slug}', [PublicSkillController::class, 'show'])->name('skills.show');
+        Route::get('/categories', [PublicSkillController::class, 'categories'])->name('categories.index');
+    });
 
 Route::prefix('v1')->name('api.v1.')
     ->middleware(['throttle:60,1,skill-integration', AuthenticateSkillIntegration::class])

@@ -18,6 +18,8 @@
 @push('meta')
   <meta name="description" content="{{ $pageDescription }}">
   <link rel="canonical" href="{{ $canonicalUrl }}">
+  <link rel="alternate" type="application/json" href="{{ route('api.public.v1.skills.show', $skill->slug) }}" title="Skill JSON">
+  <link rel="alternate" type="text/markdown" href="{{ route('skills.markdown', $skill->slug) }}" title="Skill Markdown">
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ $pageTitle }}">
   <meta property="og:description" content="{{ $pageDescription }}">

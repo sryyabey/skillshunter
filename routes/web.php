@@ -1,11 +1,17 @@
 <?php
 
+use App\Http\Controllers\LlmsController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SkillCatalogController;
+use App\Http\Controllers\SkillMarkdownController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SkillCatalogController::class, 'index'])->name('welcome');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/llms.txt', LlmsController::class)
+    ->middleware('throttle:60,1,public-catalog')->name('llms');
+Route::get('/skills/{slug}.md', SkillMarkdownController::class)
+    ->middleware('throttle:60,1,public-catalog')->name('skills.markdown');
 Route::get('/skills/{slug}', [SkillCatalogController::class, 'show'])->name('detail');
 
 Route::get('/skills/{slug}/download', [SkillCatalogController::class, 'download'])->name('skills.download');
