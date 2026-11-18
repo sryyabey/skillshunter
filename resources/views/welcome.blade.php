@@ -20,6 +20,7 @@
   <meta property="og:description" content="{{ $pageDescription }}">
   <meta property="og:url" content="{{ $canonicalUrl }}">
   <meta name="google-site-verification" content="CoBJLXA_fglP9V5yZuou4Ai-DAyBYPXONxZjgvPmhis" />
+  <meta name="msvalidate.01" content="1E0964A4D78B8E6E8C8CCDCA6D91EEF7" />
 @endpush
 
 @section('status-message')
