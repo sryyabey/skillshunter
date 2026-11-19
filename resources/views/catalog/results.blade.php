@@ -100,5 +100,5 @@
       </div>
     @endif
   @endforelse
-  <div data-catalog-pagination>{{ $skills->links() }}</div>
+  <div data-catalog-pagination>{{ $skills->links('catalog.pagination') }}</div>
 </div>
