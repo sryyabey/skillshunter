@@ -36,6 +36,8 @@ class Skill extends Model
 
             $sourceChanged = $skill->exists && $skill->isDirty(['source_url', 'source_commit', 'source_markdown']);
             if ($sourceChanged) {
+                $skill->ai_review_rejected_at = null;
+                $skill->ai_review_rejection_reason = null;
                 $skill->ai_reviewed_at = null;
                 $skill->ai_review_details = null;
                 $skill->ai_review_lease_hash = null;
@@ -77,6 +79,7 @@ class Skill extends Model
         return [
             'verified_at' => 'date',
             'ai_reviewed_at' => 'datetime',
+            'ai_review_rejected_at' => 'datetime',
             'ai_review_details' => 'array',
             'ai_review_lease_until' => 'datetime',
             'is_published' => 'boolean',

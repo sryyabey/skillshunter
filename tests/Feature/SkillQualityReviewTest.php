@@ -130,4 +130,38 @@ class SkillQualityReviewTest extends TestCase
         $this->assertTrue($skill->refresh()->is_published);
         $this->assertSame('Editor changed the summary.', $skill->summary);
     }
+
+    public function test_rejected_source_is_unpublished_and_excluded_until_source_is_corrected(): void
+    {
+        $skill = Skill::factory()->published()->create([
+            'source_markdown' => 'Old source.',
+            'source_url' => 'https://github.com/example/skills/blob/main/SKILL.md',
+        ]);
+        $next = Skill::factory()->create(['source_url' => 'https://github.com/example/skills/blob/main/next/SKILL.md']);
+        $path = self::ENDPOINT.'/'.$skill->id.'/reject';
+        $this->postJson($path, ['reason' => 'Source contains placeholder instructions'])->assertUnauthorized();
+        $this->withToken(self::TOKEN);
+        $lease = $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data.id', $skill->id)->json('data.lease_token');
+        $this->postJson($path, ['lease_token' => str_repeat('x', 64), 'reason' => 'Invalid source'])->assertConflict();
+        $this->postJson($path, ['lease_token' => $lease, 'reason' => 'Source contains placeholder instructions'])
+            ->assertOk()->assertJsonPath('data.status', 'rejected');
+        $skill->refresh();
+        $this->assertNotNull($skill->ai_review_rejected_at);
+        $this->assertSame('Source contains placeholder instructions', $skill->ai_review_rejection_reason);
+        $this->assertNull($skill->ai_reviewed_at);
+        $this->assertNull($skill->ai_review_lease_hash);
+        $this->assertNull($skill->ai_review_lease_until);
+        $this->assertFalse($skill->is_published);
+        $this->assertNull($skill->verified_at);
+        $this->postJson($path, ['lease_token' => $lease, 'reason' => 'Invalid source'])->assertConflict();
+        $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data.id', $next->id);
+        $this->travel(46)->minutes();
+        $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data.id', $next->id);
+        $skill->update(['summary' => 'An editorial change.']);
+        $this->assertNotNull($skill->refresh()->ai_review_rejected_at);
+        $skill->update(['source_markdown' => 'Corrected source instructions.']);
+        $this->assertNull($skill->refresh()->ai_review_rejected_at);
+        $this->assertNull($skill->ai_review_rejection_reason);
+        $this->postJson(self::ENDPOINT.'/claim')->assertOk()->assertJsonPath('data.id', $skill->id);
+    }
 }

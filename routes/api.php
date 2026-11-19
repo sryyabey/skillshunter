@@ -32,6 +32,7 @@ Route::prefix('v1/skill-quality-reviews')->name('api.v1.skill-quality-reviews.')
     ->middleware(['throttle:60,1,skill-quality-review', AuthenticateSkillIntegration::class.':quality_token'])
     ->group(function (): void {
         Route::post('/claim', [SkillQualityReviewController::class, 'claim'])->name('claim');
+        Route::post('/{skill}/reject', [SkillQualityReviewController::class, 'reject'])->whereNumber('skill')->name('reject');
         Route::patch('/{skill}', [SkillQualityReviewController::class, 'complete'])->whereNumber('skill')->name('complete');
     });
 

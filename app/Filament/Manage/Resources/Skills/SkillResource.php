@@ -91,6 +91,8 @@ class SkillResource extends Resource
                 IconColumn::make('ai_reviewed')->label('AI reviewed')->boolean()
                     ->state(fn (Skill $record): bool => $record->ai_reviewed_at !== null),
                 TextColumn::make('ai_reviewed_at')->label('AI reviewed on')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ai_review_rejected_at')->label('AI source rejected on')->dateTime()->sortable()->placeholder('—'),
+                TextColumn::make('ai_review_rejection_reason')->label('Source rejection reason')->wrap()->toggleable(),
                 TextColumn::make('verified_at')->label('Listing approved on')->date()->sortable(),
                 TextColumn::make('reviews_count')->counts('reviews')->label('Reviews'),
             ])
@@ -104,7 +106,13 @@ class SkillResource extends Resource
                     ->searchable()
                     ->preload(),
                 TernaryFilter::make('ai_reviewed_at')->label('AI review')->nullable()
-                    ->trueLabel('Reviewed')->falseLabel('Pending review'),
+                    ->trueLabel('Reviewed')->falseLabel('Pending review')
+                    ->queries(
+                        true: fn ($query) => $query->whereNotNull('ai_reviewed_at'),
+                        false: fn ($query) => $query->whereNull('ai_reviewed_at')->whereNull('ai_review_rejected_at'),
+                    ),
+                TernaryFilter::make('ai_review_rejected_at')->label('Source rejection')->nullable()
+                    ->trueLabel('Rejected')->falseLabel('Not rejected'),
                 TernaryFilter::make('verified_at')
                     ->label('Listing approval')
                     ->nullable()

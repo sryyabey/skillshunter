@@ -25,6 +25,7 @@ class SkillQualityReviewController extends Controller
     {
         return DB::transaction(function (): JsonResponse {
             $skill = Skill::query()->whereNull('ai_reviewed_at')
+                ->whereNull('ai_review_rejected_at')
                 ->whereLike('source_url', 'https://github.com/%/blob/%/SKILL.md')
                 ->where(fn (Builder $query) => $query->whereNull('ai_review_lease_until')->orWhere('ai_review_lease_until', '<=', now()))
                 ->orderBy('created_at')->orderBy('id')->lockForUpdate()->first();
@@ -51,6 +52,30 @@ class SkillQualityReviewController extends Controller
                 'categories' => Category::orderBy('name')->get(['slug', 'name']),
                 ...$skill->only(self::EDITORIAL_FIELDS),
             ]]);
+        }, attempts: 3);
+    }
+
+    public function reject(Request $request, int $skill): JsonResponse
+    {
+        $data = $request->validate([
+            'lease_token' => ['required', 'string', 'size:64'],
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        return DB::transaction(function () use ($skill, $data): JsonResponse {
+            $record = Skill::query()->lockForUpdate()->findOrFail($skill);
+            $this->assertLease($record, $data['lease_token']);
+            $record->forceFill([
+                'ai_review_rejected_at' => now(),
+                'ai_review_rejection_reason' => $data['reason'],
+                'ai_review_lease_hash' => null,
+                'ai_review_lease_until' => null,
+                'is_published' => false,
+                'verified_at' => null,
+                'approved_by' => null,
+            ])->save();
+
+            return response()->json(['data' => ['id' => $record->id, 'status' => 'rejected']]);
         }, attempts: 3);
     }
 
