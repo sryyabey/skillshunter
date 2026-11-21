@@ -62,6 +62,7 @@ SKILL #{{ $skill->id }} @if ($skill->version) • VERSION {{ $skill->version }} 
 @endsection
 
 @section('header-actions')
+@include('catalog.compare-button')
 <a href="#write-review" class="bg-ink text-paper hover:bg-emeraldTrust text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm">
           Write a Review
         </a>

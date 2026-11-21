@@ -1,0 +1,1 @@
+<button type="button" data-compare-toggle data-slug="{{ $skill->slug }}" data-title="{{ $skill->title }}" aria-pressed="false" class="px-3 py-1.5 text-xs border border-borderline rounded-lg hover:border-emeraldTrust">Compare</button>

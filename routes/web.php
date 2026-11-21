@@ -7,6 +7,7 @@ use App\Http\Controllers\SkillMarkdownController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SkillCatalogController::class, 'index'])->name('welcome');
+Route::get('/compare', [SkillCatalogController::class, 'compare'])->name('skills.compare');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/llms.txt', LlmsController::class)
     ->middleware('throttle:60,1,public-catalog')->name('llms');

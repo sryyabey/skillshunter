@@ -68,6 +68,7 @@
         @csrf
         <button class="px-3 py-1.5 text-xs border border-borderline rounded-lg">▲ Helpful @if ($skill->votes_count) · {{ $skill->votes_count }} @endif</button>
       </form>
+      @include('catalog.compare-button')
       <a href="{{ route('detail', $skill->slug) }}#system-instructions" class="px-3 py-1.5 text-xs bg-[#F3F1EC] rounded-lg">View Instructions</a>
     </div>
 

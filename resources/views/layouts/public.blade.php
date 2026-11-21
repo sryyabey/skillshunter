@@ -6,6 +6,7 @@
   <title>@yield('title')</title>
   <link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon" sizes="16x16 32x32 48x48">
   @stack('meta')
+  <link rel="stylesheet" href="{{ asset('css/skill-comparison.css') }}">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,6 +67,8 @@
 
   @include('layouts.partials.footer')
 
+  @include('catalog.compare-tray')
+  <script type="module" src="{{ asset('js/skill-comparison.js') }}"></script>
   @stack('scripts')
 </body>
 </html>

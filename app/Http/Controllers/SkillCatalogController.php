@@ -73,6 +73,34 @@ class SkillCatalogController extends Controller
         ]);
     }
 
+    public function compare(Request $request): View
+    {
+        $data = $request->validate([
+            'skills' => ['sometimes', 'array', 'list', 'max:3'],
+            'skills.*' => ['required', 'string', 'max:255', 'distinct'],
+        ]);
+        $slugs = $data['skills'] ?? [];
+        $skills = Skill::published()->with('category')->withCount('approvedReviews')
+            ->whereIn('slug', $slugs)->get()
+            ->sortBy(fn (Skill $skill) => array_search($skill->slug, $slugs, true))->values();
+        $fields = [
+            'summary' => 'Overview', 'use_cases' => 'Use cases', 'compatibility' => 'Compatibility',
+            'setup_tip' => 'Setup', 'limitations' => 'Limitations', 'license' => 'License',
+            'sample_input' => 'Example input', 'sample_output' => 'Example output',
+        ];
+        $rows = collect($fields)->map(function (string $label, string $field) use ($skills): array {
+            $values = $skills->map(function (Skill $skill) use ($field): string {
+                $value = $skill->{$field};
+
+                return is_array($value) ? implode("\n", $value) : (string) ($value ?? '');
+            });
+
+            return ['label' => $label, 'values' => $values, 'different' => $values->unique()->count() > 1];
+        });
+
+        return view('catalog.compare', compact('skills', 'rows', 'slugs'));
+    }
+
     private function catalogStatusMessage(): string
     {
         if (Cache::has('skill-worker-status:controller')) {
