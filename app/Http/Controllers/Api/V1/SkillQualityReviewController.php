@@ -21,17 +21,45 @@ class SkillQualityReviewController extends Controller
         'seo_keywords', 'setup_tip', 'sample_input', 'sample_output',
     ];
 
-    public function claim(): JsonResponse
+    public function capabilities(): JsonResponse
     {
-        return DB::transaction(function (): JsonResponse {
-            $skill = Skill::query()->whereNull('ai_reviewed_at')
-                ->whereNull('ai_review_rejected_at')
-                ->whereLike('source_url', 'https://github.com/%/blob/%/SKILL.md')
-                ->where(fn (Builder $query) => $query->whereNull('ai_review_lease_until')->orWhere('ai_review_lease_until', '<=', now()))
-                ->orderBy('created_at')->orderBy('id')->lockForUpdate()->first();
+        return response()->json(['api_version' => 2, 'targeted_security_claim' => true]);
+    }
+
+    public function claim(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'skill_slug' => ['sometimes', 'required', 'string', 'max:160', 'exists:skills,slug'],
+            'source_revision' => ['required_with:skill_slug', 'array:url,commit,sha256'],
+            'source_revision.url' => ['required_with:skill_slug', 'string', 'max:2048', 'url:https'],
+            'source_revision.commit' => ['required_with:skill_slug', 'regex:/\A[0-9a-f]{40}\z/'],
+            'source_revision.sha256' => ['required_with:skill_slug', 'regex:/\A[0-9a-f]{64}\z/'],
+        ]);
+
+        return DB::transaction(function () use ($data): JsonResponse {
+            $targeted = isset($data['skill_slug']);
+            $query = Skill::query();
+            if ($targeted) {
+                $query->where('slug', $data['skill_slug']);
+            } else {
+                $query->whereNull('ai_reviewed_at')
+                    ->whereNull('ai_review_rejected_at')
+                    ->whereLike('source_url', 'https://github.com/%/blob/%/SKILL.md')
+                    ->where(fn (Builder $query) => $query->whereNull('ai_review_lease_until')->orWhere('ai_review_lease_until', '<=', now()));
+            }
+            $skill = $query->orderBy('created_at')->orderBy('id')->lockForUpdate()->first();
 
             if (! $skill) {
                 return response()->json(['api_version' => 2, 'data' => null]);
+            }
+
+            if ($targeted) {
+                $revision = $data['source_revision'];
+                abort_unless($skill->source_url === $revision['url']
+                    && $skill->source_commit === $revision['commit']
+                    && hash_equals(hash('sha256', $skill->source_markdown ?? ''), $revision['sha256']),
+                    409, 'The source changed after the security assessment. Rescan before rejecting it.');
+                abort_if($skill->ai_review_lease_until?->isFuture(), 409, 'Another review currently holds this skill.');
             }
 
             $token = Str::random(64);

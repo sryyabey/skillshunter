@@ -44,6 +44,12 @@ class Skill extends Model
                 $skill->ai_review_lease_until = null;
             }
 
+            if ($skill->is_published && $skill->ai_review_rejected_at) {
+                throw ValidationException::withMessages([
+                    'is_published' => 'Resolve the rejected source before publishing this skill.',
+                ]);
+            }
+
             if (! $skill->source_commit && ! $skill->getOriginal('source_commit')) {
                 return;
             }
