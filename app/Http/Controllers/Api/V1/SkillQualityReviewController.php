@@ -44,7 +44,8 @@ class SkillQualityReviewController extends Controller
             } else {
                 $query->whereNull('ai_reviewed_at')
                     ->whereNull('ai_review_rejected_at')
-                    ->whereLike('source_url', 'https://github.com/%/blob/%/SKILL.md')
+                    ->where(fn (Builder $sources) => $sources->whereLike('source_url', 'https://github.com/%/blob/%/SKILL.md')
+                        ->orWhereIn('id', DB::table('skill_discovered_sources')->select('skill_id')->whereNotNull('skill_id')))
                     ->where(fn (Builder $query) => $query->whereNull('ai_review_lease_until')->orWhere('ai_review_lease_until', '<=', now()));
             }
             $skill = $query->orderBy('created_at')->orderBy('id')->lockForUpdate()->first();

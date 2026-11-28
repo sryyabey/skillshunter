@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en-GB" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liik — Turn Social Followers Into Booked Clients | 0% Commission (UK)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            linen: '#F6F4EF',
+            stonecard: '#FFFFFF',
+            ink: '#141714',
+            muted: '#575D57',
+            line: '#E2DDD3',
+            pine: '#134E3A',
+            pineDark: '#0D3829',
+            terracotta: '#C85A32',
+            sage: '#E6EFEA',
+          },
+          boxShadow: {
+            tactile: '0 1px 0 0 #141714, 0 12px 28px -10px rgba(20, 23, 20, 0.08)',
+            card: '0 1px 0 0 #E2DDD3, 0 8px 20px -12px rgba(20, 23, 20, 0.06)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F6F4EF;
+      color: #141714;
+      background-image: radial-gradient(#D8D2C5 0.75px, transparent 0.75px);
+      background-size: 20px 20px;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-pine selection:text-white">
+
+  <!-- Top Announcement Strip -->
+  <div class="bg-ink text-linen text-xs sm:text-[13px] py-2.5 px-4 border-b border-ink">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <p class="truncate">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-2 align-middle"></span>
+        Built for UK solo pros: <strong>0% commission</strong> on your client bookings.
+      </p>
+      <a href="#pricing-cta" class="shrink-0 underline underline-offset-4 hover:text-emerald-300 font-medium">
+        Claim your handle →
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <header class="sticky top-0 z-40 bg-linen/95 backdrop-blur-sm border-b border-line">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2.5 group">
+        <span class="w-8 h-8 rounded-lg bg-pine text-linen font-serif font-bold text-lg flex items-center justify-center shadow-sm group-hover:bg-pineDark transition">
+          l
+        </span>
+        <span class="font-serif text-2xl font-semibold tracking-tight text-ink">liik</span>
+        <span class="hidden sm:inline-block text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-sage text-pine border border-pine/15">
+          UK
+        </span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-muted">
+        <a href="#why-switch" class="hover:text-ink transition">Why switch</a>
+        <a href="#how-it-works" class="hover:text-ink transition">How it works</a>
+        <a href="#comparison" class="hover:text-ink transition">vs Marketplaces</a>
+        <a href="#faq" class="hover:text-ink transition">FAQ</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="#login" class="text-sm font-medium text-ink hover:text-pine px-2.5 py-1.5">
+          Log in
+        </a>
+        <a href="#pricing-cta" class="text-sm font-semibold bg-pine hover:bg-pineDark text-linen px-4 py-2 rounded-lg border border-ink shadow-[0_2px_0_0_#141714] active:translate-y-[1px] transition">
+          Start free trial
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="pt-12 pb-16 sm:pt-16 sm:pb-24 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+      <!-- Left: Editorial Copy + Handle Claim -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stonecard border border-line text-xs font-medium text-muted">
+          <span>For hair, beauty, PT, coaching & independent studios</span>
+        </div>
+
+        <h1 class="font-serif text-4xl sm:text-5xl lg:text-[3.55rem] font-semibold text-ink leading-[1.08] tracking-tight">
+          Turn Instagram & TikTok followers into booked clients — <span class="text-pine italic font-normal">without</span> paying a cut.
+        </h1>
+
+        <p class="text-base sm:text-lg text-muted leading-relaxed max-w-xl">
+          Your bio page, appointment calendar, and client notes in one place. Stop stitching together three separate tools or handing over commissions when your own clients book.
+        </p>
+
+        <!-- Interactive Handle Claim Box -->
+        <form id="claimForm" class="pt-1 max-w-lg">
+          <label for="handleInput" class="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+            Reserve your booking link
+          </label>
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="flex-1 flex items-center bg-stonecard border border-ink rounded-xl px-3.5 py-2.5 shadow-[0_2px_0_0_#141714] focus-within:ring-2 focus-within:ring-pine/30">
+              <span class="text-sm font-medium text-muted select-none">liik.net/</span>
+              <input
+                id="handleInput"
+                type="text"
+                value="clairehair.uk"
+                placeholder="yourname"
+                class="w-full bg-transparent text-sm sm:text-base font-semibold text-ink focus:outline-none ml-0.5"
+              />
+            </div>
+            <button
+              type="submit"
+              class="bg-terracotta hover:bg-[#b24c27] text-white font-semibold text-sm sm:text-base px-5 py-3 rounded-xl border border-ink shadow-[0_2px_0_0_#141714] active:translate-y-[1px] transition shrink-0 cursor-pointer"
+            >
+              Claim link
+            </button>
+          </div>
+          <p id="claimFeedback" class="text-xs text-pine font-medium mt-2 h-4"></p>
+        </form>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-muted pt-1">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-pine" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            0% booking commission
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-pine" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            No app download for clients
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-pine" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Mobile + Web synced
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: Tactile Live Preview Card (Not a Generic Stock Mockup) -->
+      <div class="lg:col-span-5">
+        <div class="bg-stonecard border border-ink rounded-2xl p-5 sm:p-6 shadow-tactile">
+          <div class="flex items-center justify-between pb-4 border-b border-line">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full bg-sage border border-pine/20 flex items-center justify-center font-serif font-semibold text-pine text-lg">
+                CH
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="font-semibold text-sm sm:text-base text-ink">Claire Hollis Studio</h2>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-linen border border-line text-muted">Leeds</span>
+                </div>
+                <p id="previewUrl" class="text-xs text-muted">liik.net/clairehair.uk</p>
+              </div>
+            </div>
+            <span class="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-sage text-pine">
+              0% Fee
+            </span>
+          </div>
+
+          <!-- Sample Service & Slot Picker -->
+          <div class="pt-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wider text-muted">Popular service</span>
+              <span class="text-xs text-muted">60 mins · £55</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-linen border border-line flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold text-ink">Cut, Finish & Toner</p>
+                <p class="text-xs text-muted">Includes 15m buffer · Client notes saved</p>
+              </div>
+              <span class="text-sm font-bold text-ink">£55</span>
+            </div>
+
+            <div>
+              <span class="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+                Select a time slot (Thu)
+              </span>
+              <div id="slotGroup" class="grid grid-cols-3 gap-2">
+                <button type="button" data-slot="09:30" class="slot-btn py-2 px-3 rounded-lg text-xs font-semibold border border-line bg-linen text-ink hover:border-ink transition cursor-pointer">
+                  09:30
+                </button>
+                <button type="button" data-slot="12:00" class="slot-btn py-2 px-3 rounded-lg text-xs font-semibold border border-ink bg-pine text-linen transition cursor-pointer">
+                  12:00
+                </button>
+                <button type="button" data-slot="15:30" class="slot-btn py-2 px-3 rounded-lg text-xs font-semibold border border-line bg-linen text-ink hover:border-ink transition cursor-pointer">
+                  15:30
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-1 flex items-center justify-between text-xs border-t border-line">
+              <span class="text-muted">You keep on this booking:</span>
+              <span class="font-bold text-pine text-sm">£55.00 (100%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- UK Solo Niches Strip -->
+  <section class="border-y border-line bg-stonecard/70 py-5 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <span class="text-xs font-semibold uppercase tracking-wider text-muted">
+        Made for independent UK pros:
+      </span>
+      <div class="flex flex-wrap gap-2 text-xs font-medium text-ink">
+        <span class="px-3 py-1 rounded-md bg-linen border border-line">Hair & Colourists</span>
+        <span class="px-3 py-1 rounded-md bg-linen border border-line">Barbers</span>
+        <span class="px-3 py-1 rounded-md bg-linen border border-line">Personal Trainers</span>
+        <span class="px-3 py-1 rounded-md bg-linen border border-line">Brow & Nail Techs</span>
+        <span class="px-3 py-1 rounded-md bg-linen border border-line">Coaches & Tutors</span>
+        <span class="px-3 py-1 rounded-md bg-linen border border-line">Tattoo Artists</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pain Points / Why Switch -->
+  <section id="why-switch" class="py-16 sm:py-24 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="max-w-2xl mb-12">
+        <p class="text-xs font-semibold uppercase tracking-wider text-terracotta mb-2">Why professionals switch</p>
+        <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-ink tracking-tight">
+          Built to fix what frustrates solo service businesses.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <article class="bg-stonecard border border-line rounded-2xl p-6 shadow-card flex flex-col justify-between">
+          <div>
+            <span class="inline-block font-serif text-2xl text-pine font-semibold mb-4">01</span>
+            <h3 class="text-lg font-bold text-ink mb-2">No commission on your own clients</h3>
+            <p class="text-sm text-muted leading-relaxed">
+              You put in the hours building your social presence. Don't lose a percentage of your revenue just because a client clicked your link to book.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-line text-xs font-medium text-pine">
+            Keep 100% of session fees
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="bg-stonecard border border-line rounded-2xl p-6 shadow-card flex flex-col justify-between">
+          <div>
+            <span class="inline-block font-serif text-2xl text-pine font-semibold mb-4">02</span>
+            <h3 class="text-lg font-bold text-ink mb-2">One link instead of three workarounds</h3>
+            <p class="text-sm text-muted leading-relaxed">
+              Skip the messy chain of a bio link tool, a separate calendar app, and scattered notes. Clients see your services and book in one clean flow.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-line text-xs font-medium text-pine">
+            Bio + calendar + client history together
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="bg-stonecard border border-line rounded-2xl p-6 shadow-card flex flex-col justify-between">
+          <div>
+            <span class="inline-block font-serif text-2xl text-pine font-semibold mb-4">03</span>
+            <h3 class="text-lg font-bold text-ink mb-2">Same details on phone and desktop</h3>
+            <p class="text-sm text-muted leading-relaxed">
+              Check upcoming appointments, service rules, and client notes between sessions on your phone—with everything synced to your web workspace.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-line text-xs font-medium text-pine">
+            Mobile app & web dashboard aligned
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="py-16 sm:py-20 px-4 sm:px-6 bg-stonecard border-y border-line">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Simple setup</p>
+          <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-ink tracking-tight">
+            From bio link to booked calendar in minutes.
+          </h2>
+        </div>
+        <span class="text-sm text-muted">No complex onboarding calls required</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="space-y-2">
+          <div class="text-xs font-bold uppercase tracking-wider text-terracotta">Step 1</div>
+          <h3 class="text-base font-bold text-ink">Set up your services & hours</h3>
+          <p class="text-sm text-muted leading-relaxed">
+            Add what you offer, set durations, buffer time between appointments, and your working hours.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="text-xs font-bold uppercase tracking-wider text-terracotta">Step 2</div>
+          <h3 class="text-base font-bold text-ink">Drop your Liik link in your bio</h3>
+          <p class="text-sm text-muted leading-relaxed">
+            Share your <code class="text-xs bg-linen px-1.5 py-0.5 rounded border border-line">liik.net</code> link on Instagram, TikTok, or WhatsApp so followers can book directly on mobile.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="text-xs font-bold uppercase tracking-wider text-terracotta">Step 3</div>
+          <h3 class="text-base font-bold text-ink">Track clients & stay on schedule</h3>
+          <p class="text-sm text-muted leading-relaxed">
+            Keep client notes and booking history organised across your mobile app and web panel.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table -->
+  <section id="comparison" class="py-16 sm:py-24 px-4 sm:px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <p class="text-xs font-semibold uppercase tracking-wider text-pine mb-2">Side-by-side comparison</p>
+        <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-ink tracking-tight">
+          Why solo pros look beyond bloated marketplace apps.
+        </h2>
+      </div>
+
+      <div class="bg-stonecard border border-ink rounded-2xl overflow-hidden shadow-tactile">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-line bg-linen">
+                <th class="py-4 px-5 font-semibold text-ink">What matters day-to-day</th>
+                <th class="py-4 px-5 font-bold text-pine bg-sage/60">Liik</th>
+                <th class="py-4 px-5 font-semibold text-muted">Marketplace booking apps</th>
+                <th class="py-4 px-5 font-semibold text-muted">Basic link-in-bio tools</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              <tr>
+                <td class="py-3.5 px-5 font-medium text-ink">Direct booking from social bio</td>
+                <td class="py-3.5 px-5 font-semibold text-pine bg-sage/30">Included</td>
+                <td class="py-3.5 px-5 text-muted">Often pushes marketplace traffic</td>
+                <td class="py-3.5 px-5 text-muted">Requires external calendar</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-5 font-medium text-ink">Focus on service appointments & buffers</td>
+                <td class="py-3.5 px-5 font-semibold text-pine bg-sage/30">Built-in</td>
+                <td class="py-3.5 px-5 text-muted">Yes</td>
+                <td class="py-3.5 px-5 text-muted">Limited / creator-first</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-5 font-medium text-ink">Client history & notes</td>
+                <td class="py-3.5 px-5 font-semibold text-pine bg-sage/30">Mobile + Web</td>
+                <td class="py-3.5 px-5 text-muted">Yes</td>
+                <td class="py-3.5 px-5 text-muted">Minimal or missing</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-5 font-medium text-ink">Solo-friendly simplicity</td>
+                <td class="py-3.5 px-5 font-semibold text-pine bg-sage/30">Designed for solo pros</td>
+                <td class="py-3.5 px-5 text-muted">Can feel heavy for 1-person teams</td>
+                <td class="py-3.5 px-5 text-muted">Simple, but split workflow</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-12 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      <blockquote class="bg-stonecard border border-line rounded-2xl p-6 shadow-card">
+        <p class="font-serif text-lg text-ink leading-snug mb-4">
+          “Having my bio page, services, and booking flow in one place saved me hours of back-and-forth DMs every week.”
+        </p>
+        <footer class="text-xs text-muted font-medium">
+          <strong class="text-ink">Hannah M.</strong> · Independent Hair & Brow Specialist, Manchester
+        </footer>
+      </blockquote>
+
+      <blockquote class="bg-stonecard border border-line rounded-2xl p-6 shadow-card">
+        <p class="font-serif text-lg text-ink leading-snug mb-4">
+          “Clients book on their phones without fuss, and I can check notes between sessions without opening a laptop.”
+        </p>
+        <footer class="text-xs text-muted font-medium">
+          <strong class="text-ink">Tariq K.</strong> · 1-to-1 Fitness Coach, Birmingham
+        </footer>
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-16 sm:py-20 px-4 sm:px-6">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="font-serif text-3xl font-semibold text-ink tracking-tight mb-8">
+        Common questions
+      </h2>
+
+      <div class="space-y-3">
+        <details class="group bg-stonecard border border-line rounded-xl p-5 open:border-ink transition">
+          <summary class="font-semibold text-sm sm:text-base text-ink cursor-pointer list-none flex items-center justify-between">
+            Do my clients need to download an app to book?
+            <span class="text-muted group-open:rotate-45 transition-transform text-lg leading-none">+</span>
+          </summary>
+          <p class="mt-3 text-sm text-muted leading-relaxed">
+            No. Clients open your Liik link in their mobile browser, pick an available slot, and book in just a few taps.
+          </p>
+        </details>
+
+        <details class="group bg-stonecard border border-line rounded-xl p-5 open:border-ink transition">
+          <summary class="font-semibold text-sm sm:text-base text-ink cursor-pointer list-none flex items-center justify-between">
+            Is Liik only for hair and beauty?
+            <span class="text-muted group-open:rotate-45 transition-transform text-lg leading-none">+</span>
+          </summary>
+          <p class="mt-3 text-sm text-muted leading-relaxed">
+            No. Any solo professional or appointment-based service—including personal trainers, tutors, coaches, tattooists, and consultants—can use it.
+          </p>
+        </details>
+
+        <details class="group bg-stonecard border border-line rounded-xl p-5 open:border-ink transition">
+          <summary class="font-semibold text-sm sm:text-base text-ink cursor-pointer list-none flex items-center justify-between">
+            Can I manage things from both my phone and computer?
+            <span class="text-muted group-open:rotate-45 transition-transform text-lg leading-none">+</span>
+          </summary>
+          <p class="mt-3 text-sm text-muted leading-relaxed">
+            Yes. Your schedule, services, and client details stay in sync across mobile and web.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section id="pricing-cta" class="py-16 sm:py-20 px-4 sm:px-6">
+    <div class="max-w-5xl mx-auto bg-pine text-linen rounded-3xl p-8 sm:p-14 border border-ink shadow-tactile flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+      <div class="max-w-xl space-y-3">
+        <h2 class="font-serif text-3xl sm:text-4xl font-semibold tracking-tight">
+          Your followers already know you. Give them an easy way to book.
+        </h2>
+        <p class="text-emerald-100/90 text-sm sm:text-base">
+          Set up your profile, services, and availability in minutes and keep your client relationships under your own roof.
+        </p>
+      </div>
+      <div class="shrink-0 w-full md:w-auto">
+        <a href="#" class="block text-center bg-terracotta hover:bg-[#b24c27] text-white font-semibold px-7 py-4 rounded-xl border border-ink shadow-[0_3px_0_0_#141714] transition">
+          Create your Liik page →
+        </a>
+        <p class="text-xs text-emerald-100/75 mt-2.5 text-center md:text-left">
+          Quick setup · Cancel anytime
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-line py-8 px-4 sm:px-6 text-xs text-muted">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-serif font-bold text-base text-ink">liik</span>
+        <span>· liik.net</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="#" class="hover:text-ink">Privacy</a>
+        <a href="#" class="hover:text-ink">Terms</a>
+        <a href="#" class="hover:text-ink">Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lightweight Interactive Preview Script -->
+  <script>
+    const handleInput = document.getElementById('handleInput');
+    const previewUrl = document.getElementById('previewUrl');
+    const claimForm = document.getElementById('claimForm');
+    const claimFeedback = document.getElementById('claimFeedback');
+
+    handleInput.addEventListener('input', (e) => {
+      const clean = e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+      previewUrl.textContent = `liik.net/${clean || 'yourname'}`;
+      claimFeedback.textContent = '';
+    });
+
+    claimForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = handleInput.value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+      if (!val) {
+        claimFeedback.textContent = 'Enter a handle first to check availability.';
+        return;
+      }
+      claimFeedback.textContent = `liik.net/${val} is ready to set up — continue below.`;
+    });
+
+    const slotButtons = document.querySelectorAll('.slot-btn');
+    slotButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        slotButtons.forEach((b) => {
+          b.className = 'slot-btn py-2 px-3 rounded-lg text-xs font-semibold border border-line bg-linen text-ink hover:border-ink transition cursor-pointer';
+        });
+        btn.className = 'slot-btn py-2 px-3 rounded-lg text-xs font-semibold border border-ink bg-pine text-linen transition cursor-pointer';
+      });
+    });
+  </script>
+</body>
+</html>

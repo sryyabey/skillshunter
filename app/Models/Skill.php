@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SkillSourceReference;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,6 +29,9 @@ class Skill extends Model
     protected static function booted(): void
     {
         static::saving(function (Skill $skill): void {
+            $skill->source_content_hash = filled($skill->source_markdown) ? SkillSourceReference::fingerprint($skill->source_markdown) : null;
+            $reference = $skill->source_commit ? SkillSourceReference::parse($skill->source_url ?? '', $skill->source_commit) : null;
+            $skill->source_identity_hash = $reference ? SkillSourceReference::identity($reference) : null;
             if ($skill->is_published && preg_match('/^ {0,3}#{1,6} Insert instructions below[.!]?[ \t]*$/mi', $skill->source_markdown ?? '')) {
                 throw ValidationException::withMessages([
                     'is_published' => 'Replace the placeholder instructions before publishing.',
@@ -64,11 +68,8 @@ class Skill extends Model
                 }
             }
 
-            if ($skill->source_commit && (! preg_match('/\A[0-9a-f]{40}\z/', $skill->source_commit)
-                || ! preg_match('~\Ahttps://github\.com/[\w.-]+/[\w.-]+/blob/'.preg_quote($skill->source_commit, '~').'/(?:[^?#]+/)?SKILL\.md\z~i', $skill->source_url ?? ''))) {
-                throw ValidationException::withMessages([
-                    'source_url' => 'Link to SKILL.md at the recorded GitHub commit.',
-                ]);
+            if ($skill->source_commit && SkillSourceReference::parse($skill->source_url ?? '', $skill->source_commit) === null) {
+                throw ValidationException::withMessages(['source_url' => 'Link to SKILL.md at the recorded source commit.']);
             }
 
             if ($skill->is_published && (! $skill->verified_at || ! $skill->approved_by

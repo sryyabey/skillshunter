@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Public\V1\SkillController as PublicSkillController;
 use App\Http\Controllers\Api\V1\DiscoveryJobController;
 use App\Http\Controllers\Api\V1\SkillController;
+use App\Http\Controllers\Api\V1\SkillDiscoverySourceController;
 use App\Http\Controllers\Api\V1\SkillQualityReviewController;
 use App\Http\Controllers\Api\V1\SkillWorkerStatusController;
 use App\Http\Middleware\AuthenticateSkillIntegration;
@@ -19,6 +20,8 @@ Route::prefix('public/v1')->name('api.public.v1.')
 Route::prefix('v1')->name('api.v1.')
     ->middleware(['throttle:60,1,skill-integration', AuthenticateSkillIntegration::class])
     ->group(function (): void {
+        Route::get('/discovery-sources', [SkillDiscoverySourceController::class, 'index']);
+        Route::post('/discovery-sources', [SkillDiscoverySourceController::class, 'store']);
         Route::post('/worker-status/finder', [SkillWorkerStatusController::class, 'finder']);
         Route::post('/discovery-jobs/claim', [DiscoveryJobController::class, 'claim']);
         Route::patch('/discovery-jobs/{id}', [DiscoveryJobController::class, 'update'])->whereNumber('id');

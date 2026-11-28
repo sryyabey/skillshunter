@@ -23,6 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('skills', function (Blueprint $table) {
+            $table->dropIndex(['ai_review_rejected_at']);
             $table->dropColumn(['ai_review_rejected_at', 'ai_review_rejection_reason']);
         });
     }
